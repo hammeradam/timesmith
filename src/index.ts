@@ -68,7 +68,7 @@ export interface TimeBuilder {
   toMilliseconds: () => number;
 }
 
-const convertToUnit = (ms: number, unit: TimeUnit): number => {
+function convertToUnit(ms: number, unit: TimeUnit): number {
   switch (unit) {
     case 'w':
       return ms / TIME_CONSTANTS.WEEK_IN_MS;
@@ -83,16 +83,16 @@ const convertToUnit = (ms: number, unit: TimeUnit): number => {
     case 'ms':
       return ms;
   }
-};
+}
 
-const validateInput = (value: number, unit: string) => {
+function validateInput(value: number, unit: string) {
   if (value < 0) {
     throw new Error(`Invalid ${unit} value: ${value}. Must be non-negative.`);
   }
   if (!Number.isFinite(value)) {
-    throw new Error(`Invalid ${unit} value: ${value}. Must be finite.`);
+    throw new TypeError(`Invalid ${unit} value: ${value}. Must be finite.`);
   }
-};
+}
 
 /**
  * Creates a time builder for converting between different time units
@@ -182,7 +182,9 @@ export function time(options?: TimeOptions): TimeBuilder {
         if (value > 0) {
           const unit = isShort ? shortUnit : long;
           parts.push(
-            `${value}${isShort ? '' : ' '}${unit}${!isShort && value !== 1 ? 's' : ''}`,
+            `${value}${isShort ? '' : ' '}${unit}${
+              !isShort && value !== 1 ? 's' : ''
+            }`,
           );
           remaining %= unitMs;
         }
@@ -215,8 +217,8 @@ export function time(options?: TimeOptions): TimeBuilder {
         milliseconds: 1,
       } as const;
 
-      const timeRegex =
-        /^(\d+)(w|d|h|m|s|ms|week|weeks|day|days|hour|hours|minute|minutes|second|seconds|millisecond|milliseconds)$/i;
+      const timeRegex
+        = /^(\d+)([wdhms]|ms|week|weeks|day|days|hour|hours|minute|minutes|second|seconds|millisecond|milliseconds)$/i;
 
       for (const part of parts) {
         const matches = part.match(timeRegex);
