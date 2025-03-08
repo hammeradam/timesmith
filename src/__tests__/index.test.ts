@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { time } from '../index';
 
-describe('timespan', () => {
+describe('timesmith', () => {
   describe('basic conversions', () => {
     it('should convert hours to milliseconds', () => {
       expect(time().hour(1).build({ unit: 'ms' })).toBe(3600000);
