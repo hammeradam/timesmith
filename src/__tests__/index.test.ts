@@ -1,3 +1,4 @@
+import type { Translations } from '../index';
 import { describe, expect, it } from 'vitest';
 import { time } from '../index';
 
@@ -67,6 +68,44 @@ describe('timesmith', () => {
     it('should throw on non-finite values', () => {
       expect(() => time().minute(Number.POSITIVE_INFINITY)).toThrow();
       expect(() => time().second(Number.NaN)).toThrow();
+    });
+  });
+
+  describe('translations', () => {
+    const spanishTranslations = {
+      week: { long: { singular: 'semana', plural: 'semanas' }, short: { singular: 'sem', plural: 'sem' } },
+      day: { long: { singular: 'día', plural: 'días' }, short: { singular: 'd', plural: 'd' } },
+      hour: { long: { singular: 'hora', plural: 'horas' }, short: { singular: 'h', plural: 'h' } },
+      minute: { long: { singular: 'minuto', plural: 'minutos' }, short: { singular: 'm', plural: 'm' } },
+      second: { long: { singular: 'segundo', plural: 'segundos' }, short: { singular: 's', plural: 's' } },
+      millisecond: { long: { singular: 'milisegundo', plural: 'milisegundos' }, short: { singular: 'ms', plural: 'ms' } },
+    } satisfies Translations;
+
+    const hungarianTranslations = {
+      week: { long: { singular: 'hét', plural: 'hét' }, short: { singular: 'h', plural: 'h' } },
+      day: { long: { singular: 'nap', plural: 'nap' }, short: { singular: 'nap', plural: 'nap' } },
+      hour: { long: { singular: 'óra', plural: 'óra' }, short: { singular: 'óra', plural: 'óra' } },
+      minute: { long: { singular: 'perc', plural: 'perc' }, short: { singular: 'perc', plural: 'perc' } },
+      second: { long: { singular: 'másodperc', plural: 'másodperc' }, short: { singular: 'másodperc', plural: 'másodperc' } },
+      millisecond: { long: { singular: 'milliszekundum', plural: 'milliszekundum' }, short: { singular: 'ms', plural: 'ms' } },
+    };
+
+    it('should format time with custom translations', () => {
+      expect(time().hour(1).minute(30).toString({
+        translations: hungarianTranslations,
+      })).toBe('1 óra, 30 perc');
+    });
+
+    it('should handle plural forms correctly', () => {
+      expect(time().hour(2).toString({
+        translations: spanishTranslations,
+      })).toBe('2 horas');
+    });
+
+    it('should fall back to default translations for missing units', () => {
+      expect(time().hour(1).minute(30).toString({
+        translations: spanishTranslations,
+      })).toBe('1 hora, 30 minutos');
     });
   });
 });

@@ -19,6 +19,34 @@ export interface TimeOptions {
   ms?: number;
 }
 
+interface TimeUnitTranslation {
+  plural: string;
+  singular: string;
+}
+
+export interface Translation {
+  short: TimeUnitTranslation;
+  long: TimeUnitTranslation;
+}
+
+export interface Translations {
+  week: Translation;
+  day: Translation;
+  hour: Translation;
+  minute: Translation;
+  second: Translation;
+  millisecond: Translation;
+}
+
+export const defaultTranslations: Translations = {
+  week: { short: { singular: 'w', plural: 'w' }, long: { singular: 'week', plural: 'weeks' } },
+  day: { short: { singular: 'd', plural: 'd' }, long: { singular: 'day', plural: 'days' } },
+  hour: { short: { singular: 'h', plural: 'h' }, long: { singular: 'hour', plural: 'hours' } },
+  minute: { short: { singular: 'm', plural: 'm' }, long: { singular: 'minute', plural: 'minutes' } },
+  second: { short: { singular: 's', plural: 's' }, long: { singular: 'second', plural: 'seconds' } },
+  millisecond: { short: { singular: 'ms', plural: 'm' }, long: { singular: 'millisecond', plural: 'milliseconds' } },
+};
+
 export interface ToStringOptions {
   /**
    * Use short or long unit forms
@@ -33,6 +61,11 @@ export interface ToStringOptions {
    * @default ", "
    */
   separator?: string;
+  /**
+   * Translations to use for formatting
+   * @default { week: { short: 'w', long: 'week' }, ... }
+   */
+  translations?: Translations;
 }
 
 export interface BuildOptions {
@@ -161,30 +194,28 @@ export function time(options?: TimeOptions): TimeBuilder {
       });
     },
     toString: (stringOptions?: ToStringOptions) => {
-      const { format = 'long', separator = ', ' } = stringOptions || {};
+      const { format = 'long', separator = ', ', translations = defaultTranslations } = stringOptions || {};
       const isShort = format === 'short';
       const parts: string[] = [];
       let remaining = ms;
 
       const unitMap = {
-        week: { long: 'week', short: 'w', ms: TIME_CONSTANTS.WEEK_IN_MS },
-        day: { long: 'day', short: 'd', ms: TIME_CONSTANTS.DAY_IN_MS },
-        hour: { long: 'hour', short: 'h', ms: TIME_CONSTANTS.HOUR_IN_MS },
-        minute: { long: 'minute', short: 'm', ms: TIME_CONSTANTS.MINUTE_IN_MS },
-        second: { long: 'second', short: 's', ms: TIME_CONSTANTS.SECOND_IN_MS },
-        millisecond: { long: 'millisecond', short: 'ms', ms: 1 },
+        week: { long: translations.week.long, short: translations.week.short, ms: TIME_CONSTANTS.WEEK_IN_MS },
+        day: { long: translations.day.long, short: translations.day.short, ms: TIME_CONSTANTS.DAY_IN_MS },
+        hour: { long: translations.hour.long, short: translations.hour.short, ms: TIME_CONSTANTS.HOUR_IN_MS },
+        minute: { long: translations.minute.long, short: translations.minute.short, ms: TIME_CONSTANTS.MINUTE_IN_MS },
+        second: { long: translations.second.long, short: translations.second.short, ms: TIME_CONSTANTS.SECOND_IN_MS },
+        millisecond: { long: translations.millisecond.long, short: translations.millisecond.short, ms: 1 },
       } as const;
 
-      for (const [_, { long, short: shortUnit, ms: unitMs }] of Object.entries(
+      for (const [_, { long, short, ms: unitMs }] of Object.entries(
         unitMap,
       )) {
         const value = Math.floor(remaining / unitMs);
+        const isPlural = value !== 1;
         if (value > 0) {
-          const unit = isShort ? shortUnit : long;
           parts.push(
-            `${value}${isShort ? '' : ' '}${unit}${
-              !isShort && value !== 1 ? 's' : ''
-            }`,
+            `${value}${isShort ? '' : ' '}${isPlural ? isShort ? short.plural : long.plural : isShort ? short.singular : long.singular}`,
           );
           remaining %= unitMs;
         }
