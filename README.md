@@ -13,6 +13,7 @@ Or using your preferred package manager:
 ```bash
 npm install timesmith
 yarn add timesmith
+bun add timesmith
 ```
 
 ## Usage
@@ -22,14 +23,14 @@ import { time } from 'timesmith';
 
 // Basic usage
 const duration = time()
-  .day(1)
-  .hour(2)
-  .minute(30)
+  .addDays(1)
+  .addHours(2)
+  .addMinutes(30)
   .build(); // Returns seconds by default
 
 // Convert to different units
 const inMilliseconds = time()
-  .hour(1)
+  .addHours(1)
   .build({ unit: 'ms' }); // 3600000
 
 // Parse from string
@@ -39,25 +40,25 @@ const fromString = time()
 
 // Human readable output
 const readable = time()
-  .day(1)
-  .hour(2)
+  .addDays(1)
+  .addHours(2)
   .toString(); // "1 day, 2 hours"
 
 // Short format
 const short = time()
-  .day(1)
-  .hour(2)
+  .addDays(1)
+  .addHours(2)
   .toString({ format: 'short' }); // "1d, 2h"
 
 // Custom separator
 const customSeparator = time()
-  .hour(1)
-  .minute(30)
+  .addHours(1)
+  .addMinutes(30)
   .toString({ separator: ' | ' }); // "1 hour | 30 minutes"
 
 // Localization
 const spanish = time()
-  .hour(2)
+  .addHours(2)
   .toString({
     translations: {
       hour: {
@@ -76,12 +77,12 @@ Creates a new time builder instance.
 
 ### Methods
 
-- `week(weeks?)`: Add weeks
-- `day(days?)`: Add days
-- `hour(hours?)`: Add hours
-- `minute(minutes?)`: Add minutes
-- `second(seconds?)`: Add seconds
-- `millisecond(milliseconds?)`: Add milliseconds
+- `addWeeks(weeks?)`: Add weeks
+- `addDays(days?)`: Add days
+- `addHours(hours?)`: Add hours
+- `addMinutes(minutes?)`: Add minutes
+- `addSeconds(seconds?)`: Add seconds
+- `addMilliseconds(milliseconds?)`: Add milliseconds
 - `toString(options?)`: Convert to human readable string
   - `options.format`: 'long' (default) or 'short'
   - `options.separator`: Custom separator (default: ', ')
