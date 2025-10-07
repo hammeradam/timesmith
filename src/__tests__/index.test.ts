@@ -269,6 +269,172 @@ describe('timesmith', () => {
     });
   });
 
+  describe('comparison operators', () => {
+    describe('isLessThan', () => {
+      it('should return true when duration is less', () => {
+        expect(time().hour(1).isLessThan(time().hour(2))).toBe(true);
+      });
+
+      it('should return false when duration is greater', () => {
+        expect(time().hour(2).isLessThan(time().hour(1))).toBe(false);
+      });
+
+      it('should return false when durations are equal', () => {
+        expect(time().hour(1).isLessThan(time().hour(1))).toBe(false);
+      });
+
+      it('should work with different units', () => {
+        expect(time().minute(30).isLessThan(time().hour(1))).toBe(true);
+        expect(time().second(59).isLessThan(time().minute(1))).toBe(true);
+      });
+
+      it('should work with parsed durations', () => {
+        expect(time().fromString('1h 30m').isLessThan(time().fromString('2h'))).toBe(true);
+      });
+    });
+
+    describe('isLessThanOrEqual', () => {
+      it('should return true when duration is less', () => {
+        expect(time().hour(1).isLessThanOrEqual(time().hour(2))).toBe(true);
+      });
+
+      it('should return true when durations are equal', () => {
+        expect(time().hour(1).isLessThanOrEqual(time().hour(1))).toBe(true);
+      });
+
+      it('should return false when duration is greater', () => {
+        expect(time().hour(2).isLessThanOrEqual(time().hour(1))).toBe(false);
+      });
+
+      it('should work with equivalent durations in different units', () => {
+        expect(time().minute(60).isLessThanOrEqual(time().hour(1))).toBe(true);
+      });
+    });
+
+    describe('isGreaterThan', () => {
+      it('should return true when duration is greater', () => {
+        expect(time().hour(2).isGreaterThan(time().hour(1))).toBe(true);
+      });
+
+      it('should return false when duration is less', () => {
+        expect(time().hour(1).isGreaterThan(time().hour(2))).toBe(false);
+      });
+
+      it('should return false when durations are equal', () => {
+        expect(time().hour(1).isGreaterThan(time().hour(1))).toBe(false);
+      });
+
+      it('should work with different units', () => {
+        expect(time().hour(1).isGreaterThan(time().minute(30))).toBe(true);
+        expect(time().day(1).isGreaterThan(time().hour(23))).toBe(true);
+      });
+    });
+
+    describe('isGreaterThanOrEqual', () => {
+      it('should return true when duration is greater', () => {
+        expect(time().hour(2).isGreaterThanOrEqual(time().hour(1))).toBe(true);
+      });
+
+      it('should return true when durations are equal', () => {
+        expect(time().hour(1).isGreaterThanOrEqual(time().hour(1))).toBe(true);
+      });
+
+      it('should return false when duration is less', () => {
+        expect(time().hour(1).isGreaterThanOrEqual(time().hour(2))).toBe(false);
+      });
+
+      it('should work with equivalent durations in different units', () => {
+        expect(time().hour(1).isGreaterThanOrEqual(time().minute(60))).toBe(true);
+      });
+    });
+
+    describe('equals', () => {
+      it('should return true for equal durations', () => {
+        expect(time().hour(1).equals(time().hour(1))).toBe(true);
+      });
+
+      it('should return false for unequal durations', () => {
+        expect(time().hour(1).equals(time().hour(2))).toBe(false);
+      });
+
+      it('should return true for equivalent durations in different units', () => {
+        expect(time().hour(1).equals(time().minute(60))).toBe(true);
+        expect(time().day(1).equals(time().hour(24))).toBe(true);
+        expect(time().week(1).equals(time().day(7))).toBe(true);
+      });
+
+      it('should work with complex durations', () => {
+        const duration1 = time().hour(1).add(time().minute(30));
+        const duration2 = time().minute(90);
+        expect(duration1.equals(duration2)).toBe(true);
+      });
+
+      it('should work with parsed durations', () => {
+        expect(time().fromString('1h 30m').equals(time().fromString('90m'))).toBe(true);
+      });
+
+      it('should work with ISO8601 durations', () => {
+        expect(time().fromISO8601String('PT1H').equals(time().fromISO8601String('PT60M'))).toBe(true);
+      });
+    });
+
+    describe('isBetween', () => {
+      it('should return true when duration is between min and max', () => {
+        expect(time().hour(2).isBetween(time().hour(1), time().hour(3))).toBe(true);
+      });
+
+      it('should return true when duration equals min', () => {
+        expect(time().hour(1).isBetween(time().hour(1), time().hour(3))).toBe(true);
+      });
+
+      it('should return true when duration equals max', () => {
+        expect(time().hour(3).isBetween(time().hour(1), time().hour(3))).toBe(true);
+      });
+
+      it('should return false when duration is less than min', () => {
+        expect(time().minute(30).isBetween(time().hour(1), time().hour(3))).toBe(false);
+      });
+
+      it('should return false when duration is greater than max', () => {
+        expect(time().hour(4).isBetween(time().hour(1), time().hour(3))).toBe(false);
+      });
+
+      it('should work with different units', () => {
+        expect(time().minute(90).isBetween(time().hour(1), time().hour(2))).toBe(true);
+        expect(time().second(3660).isBetween(time().hour(1), time().hour(2))).toBe(true);
+      });
+
+      it('should work with parsed durations', () => {
+        expect(
+          time().fromString('1h 30m').isBetween(
+            time().fromString('1h'),
+            time().fromString('2h'),
+          ),
+        ).toBe(true);
+      });
+    });
+
+    describe('comparison with arithmetic', () => {
+      it('should work with add', () => {
+        const base = time().hour(1);
+        const added = base.add(time().minute(30));
+        expect(added.isGreaterThan(base)).toBe(true);
+      });
+
+      it('should work with subtract', () => {
+        const base = time().hour(2);
+        const subtracted = base.subtract(time().minute(30));
+        expect(subtracted.isLessThan(base)).toBe(true);
+      });
+
+      it('should compare results of operations', () => {
+        const result1 = time().hour(3).subtract(time().minute(30));
+        const result2 = time().hour(2).add(time().minute(30));
+        expect(result1.equals(result2)).toBe(true);
+      });
+    });
+  });
+
   describe('translations', () => {
     const spanishTranslations = {
       week: { long: { singular: 'semana', plural: 'semanas' }, short: { singular: 'sem', plural: 'sem' } },

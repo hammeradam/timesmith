@@ -86,6 +86,12 @@ export interface BuildOptions {
   unit?: TimeUnit;
 }
 
+/**
+ * Base type for duration that only exposes the toMilliseconds method
+ * Used for accepting any TimeBuilder variant in arithmetic and comparison operations
+ */
+export type BaseTimeBuilder = Pick<TimeBuilder, 'toMilliseconds'>;
+
 interface TimeBuilderWeek extends Omit<TimeBuilder, 'week' | 'addWeeks'> {}
 interface TimeBuilderDay extends Omit<TimeBuilder, 'week' | 'addWeeks' | 'day' | 'addDays'> {}
 interface TimeBuilderHour extends Omit<TimeBuilder, 'week' | 'addWeeks' | 'day' | 'addDays' | 'hour' | 'addHours'> {}
@@ -239,14 +245,57 @@ export interface TimeBuilder {
    * @returns A new time object with the combined duration
    * @example time().hour(1).add(time().minute(30)) // Returns 1 hour 30 minutes
    */
-  add: (duration: Pick<TimeBuilder, 'toMilliseconds'>) => TimeBuilder;
+  add: (duration: BaseTimeBuilder) => TimeBuilder;
   /**
    * Subtracts another duration from the current duration
    * @param duration - The duration to subtract (any TimeBuilder variant)
    * @returns A new time object with the result (minimum 0)
    * @example time().hour(2).subtract(time().minute(30)) // Returns 1 hour 30 minutes
    */
-  subtract: (duration: Pick<TimeBuilder, 'toMilliseconds'>) => TimeBuilder;
+  subtract: (duration: BaseTimeBuilder) => TimeBuilder;
+  /**
+   * Checks if the current duration is less than another duration
+   * @param duration - The duration to compare against
+   * @returns True if current duration is less than the provided duration
+   * @example time().hour(1).isLessThan(time().hour(2)) // true
+   */
+  isLessThan: (duration: BaseTimeBuilder) => boolean;
+  /**
+   * Checks if the current duration is less than or equal to another duration
+   * @param duration - The duration to compare against
+   * @returns True if current duration is less than or equal to the provided duration
+   * @example time().hour(1).isLessThanOrEqual(time().hour(1)) // true
+   */
+  isLessThanOrEqual: (duration: BaseTimeBuilder) => boolean;
+  /**
+   * Checks if the current duration is greater than another duration
+   * @param duration - The duration to compare against
+   * @returns True if current duration is greater than the provided duration
+   * @example time().hour(2).isGreaterThan(time().hour(1)) // true
+   */
+  isGreaterThan: (duration: BaseTimeBuilder) => boolean;
+  /**
+   * Checks if the current duration is greater than or equal to another duration
+   * @param duration - The duration to compare against
+   * @returns True if current duration is greater than or equal to the provided duration
+   * @example time().hour(2).isGreaterThanOrEqual(time().hour(2)) // true
+   */
+  isGreaterThanOrEqual: (duration: BaseTimeBuilder) => boolean;
+  /**
+   * Checks if the current duration equals another duration
+   * @param duration - The duration to compare against
+   * @returns True if durations are equal
+   * @example time().hour(1).equals(time().minute(60)) // true
+   */
+  equals: (duration: BaseTimeBuilder) => boolean;
+  /**
+   * Checks if the current duration is between two other durations (inclusive)
+   * @param min - The minimum duration
+   * @param max - The maximum duration
+   * @returns True if current duration is between min and max (inclusive)
+   * @example time().hour(2).isBetween(time().hour(1), time().hour(3)) // true
+   */
+  isBetween: (min: BaseTimeBuilder, max: BaseTimeBuilder) => boolean;
 }
 
 const TIME_CONSTANTS = {
@@ -521,15 +570,45 @@ function build(currentMs: number, options: BuildOptions = {}) {
   return convertToUnit(currentMs, unit);
 }
 
-function add(currentMs: number, duration: Pick<TimeBuilder, 'toMilliseconds'>) {
+function add(currentMs: number, duration: BaseTimeBuilder) {
   const durationMs = duration.toMilliseconds();
   return time({ ms: currentMs + durationMs });
 }
 
-function subtract(currentMs: number, duration: Pick<TimeBuilder, 'toMilliseconds'>) {
+function subtract(currentMs: number, duration: BaseTimeBuilder) {
   const durationMs = duration.toMilliseconds();
   // Ensure result is not negative
   return time({ ms: Math.max(0, currentMs - durationMs) });
+}
+
+function isLessThan(currentMs: number, duration: BaseTimeBuilder) {
+  return currentMs < duration.toMilliseconds();
+}
+
+function isLessThanOrEqual(currentMs: number, duration: BaseTimeBuilder) {
+  return currentMs <= duration.toMilliseconds();
+}
+
+function isGreaterThan(currentMs: number, duration: BaseTimeBuilder) {
+  return currentMs > duration.toMilliseconds();
+}
+
+function isGreaterThanOrEqual(currentMs: number, duration: BaseTimeBuilder) {
+  return currentMs >= duration.toMilliseconds();
+}
+
+function equals(currentMs: number, duration: BaseTimeBuilder) {
+  return currentMs === duration.toMilliseconds();
+}
+
+function isBetween(
+  currentMs: number,
+  min: BaseTimeBuilder,
+  max: BaseTimeBuilder,
+) {
+  const minMs = min.toMilliseconds();
+  const maxMs = max.toMilliseconds();
+  return currentMs >= minMs && currentMs <= maxMs;
 }
 
 /**
@@ -585,7 +664,13 @@ export function time(options?: TimeOptions): TimeBuilder {
     toSeconds: () => ms / TIME_CONSTANTS.SECOND_IN_MS,
     toMilliseconds: () => ms,
     build: (options: BuildOptions = {}) => build(ms, options),
-    add: (duration: Pick<TimeBuilder, 'toMilliseconds'>) => add(ms, duration),
-    subtract: (duration: Pick<TimeBuilder, 'toMilliseconds'>) => subtract(ms, duration),
+    add: (duration: BaseTimeBuilder) => add(ms, duration),
+    subtract: (duration: BaseTimeBuilder) => subtract(ms, duration),
+    isLessThan: (duration: BaseTimeBuilder) => isLessThan(ms, duration),
+    isLessThanOrEqual: (duration: BaseTimeBuilder) => isLessThanOrEqual(ms, duration),
+    isGreaterThan: (duration: BaseTimeBuilder) => isGreaterThan(ms, duration),
+    isGreaterThanOrEqual: (duration: BaseTimeBuilder) => isGreaterThanOrEqual(ms, duration),
+    equals: (duration: BaseTimeBuilder) => equals(ms, duration),
+    isBetween: (min: BaseTimeBuilder, max: BaseTimeBuilder) => isBetween(ms, min, max),
   };
 }

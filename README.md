@@ -124,6 +124,39 @@ const large = time().hour(2);
 small.subtract(large).build(); // 0
 ```
 
+### Comparison Operators
+
+```typescript
+// Compare durations
+const timeout = time().second(30);
+const elapsed = time().second(45);
+
+timeout.isLessThan(elapsed); // true
+timeout.isLessThanOrEqual(time().second(30)); // true
+elapsed.isGreaterThan(timeout); // true
+elapsed.isGreaterThanOrEqual(time().second(45)); // true
+
+// Check equality (works across different units)
+time().hour(1).equals(time().minute(60)); // true
+time().day(1).equals(time().hour(24)); // true
+
+// Check if duration is within a range
+const duration = time().hour(2);
+duration.isBetween(time().hour(1), time().hour(3)); // true
+
+// Combine with arithmetic
+const limit = time().minute(30);
+const used = time().minute(20);
+const remaining = limit.subtract(used);
+
+if (remaining.isLessThan(time().minute(5))) {
+  console.log('Running low on time!');
+}
+
+// Works with any duration format
+time().fromString('1h 30m').isGreaterThan(time().fromISO8601String('PT1H')); // true
+```
+
 ### String Formatting
 
 ```typescript
@@ -448,6 +481,103 @@ time().hour(1).subtract(time().hour(2)).build(); // 0
 
 ---
 
+### Comparison Methods
+
+#### `isLessThan(duration): boolean`
+
+Checks if the current duration is less than another duration.
+
+**Parameters:**
+- `duration` - Any TimeBuilder instance to compare against
+
+**Returns:** `boolean`
+
+**Example:**
+```typescript
+time().hour(1).isLessThan(time().hour(2)); // true
+time().minute(30).isLessThan(time().hour(1)); // true
+```
+
+#### `isLessThanOrEqual(duration): boolean`
+
+Checks if the current duration is less than or equal to another duration.
+
+**Parameters:**
+- `duration` - Any TimeBuilder instance to compare against
+
+**Returns:** `boolean`
+
+**Example:**
+```typescript
+time().hour(1).isLessThanOrEqual(time().hour(1)); // true
+time().minute(60).isLessThanOrEqual(time().hour(1)); // true
+```
+
+#### `isGreaterThan(duration): boolean`
+
+Checks if the current duration is greater than another duration.
+
+**Parameters:**
+- `duration` - Any TimeBuilder instance to compare against
+
+**Returns:** `boolean`
+
+**Example:**
+```typescript
+time().hour(2).isGreaterThan(time().hour(1)); // true
+time().day(1).isGreaterThan(time().hour(23)); // true
+```
+
+#### `isGreaterThanOrEqual(duration): boolean`
+
+Checks if the current duration is greater than or equal to another duration.
+
+**Parameters:**
+- `duration` - Any TimeBuilder instance to compare against
+
+**Returns:** `boolean`
+
+**Example:**
+```typescript
+time().hour(2).isGreaterThanOrEqual(time().hour(2)); // true
+time().hour(1).isGreaterThanOrEqual(time().minute(60)); // true
+```
+
+#### `equals(duration): boolean`
+
+Checks if the current duration equals another duration.
+
+**Parameters:**
+- `duration` - Any TimeBuilder instance to compare against
+
+**Returns:** `boolean`
+
+**Example:**
+```typescript
+time().hour(1).equals(time().minute(60)); // true
+time().day(1).equals(time().hour(24)); // true
+time().week(1).equals(time().day(7)); // true
+```
+
+#### `isBetween(min, max): boolean`
+
+Checks if the current duration is between two other durations (inclusive).
+
+**Parameters:**
+- `min` - The minimum duration
+- `max` - The maximum duration
+
+**Returns:** `boolean`
+
+**Example:**
+```typescript
+time().hour(2).isBetween(time().hour(1), time().hour(3)); // true
+time().minute(90).isBetween(time().hour(1), time().hour(2)); // true
+time().hour(4).isBetween(time().hour(1), time().hour(3)); // false
+```
+
+---
+
 ## Type Safety & Validation
 
 ### Progressive API
@@ -550,6 +680,42 @@ const allocated = time().week(2);
 const spent = time().day(8).hour(6);
 const remaining = allocated.subtract(spent);
 remaining.toString(); // "5 days, 18 hours"
+```
+
+### Duration Comparison & Validation
+```typescript
+// Validate timeouts
+const requestTimeout = time().second(30);
+const maxTimeout = time().minute(1);
+
+if (requestTimeout.isLessThanOrEqual(maxTimeout)) {
+  // Safe to proceed
+  fetch(url, { timeout: requestTimeout.toMilliseconds() });
+}
+
+// SLA monitoring
+const responseTime = time().millisecond(250);
+const slaLimit = time().millisecond(500);
+
+if (responseTime.isLessThan(slaLimit)) {
+  console.log('✓ Within SLA');
+}
+
+// Progress tracking
+const elapsed = time().minute(45);
+const estimated = time().hour(1);
+
+const progress = (elapsed.toMilliseconds() / estimated.toMilliseconds()) * 100;
+console.log(`Progress: ${progress}%`);
+
+// Time window validation
+const maintenanceWindow = time().hour(2);
+const minWindow = time().hour(1);
+const maxWindow = time().hour(4);
+
+if (maintenanceWindow.isBetween(minWindow, maxWindow)) {
+  console.log('Maintenance window is acceptable');
+}
 ```
 
 ---
