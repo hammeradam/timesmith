@@ -1,5 +1,11 @@
 # ⏱️ timesmith
 
+[![npm version](https://badge.fury.io/js/timesmith.svg)](https://badge.fury.io/js/timesmith)
+[![CI](https://github.com/hammeradam/timesmith/workflows/CI/badge.svg)](https://github.com/hammeradam/timesmith/actions)
+[![codecov](https://codecov.io/gh/hammeradam/timesmith/branch/main/graph/badge.svg)](https://codecov.io/gh/hammeradam/timesmith)
+[![TypeScript](https://img.shields.io/badge/%3C%2F%3E-TypeScript-%230074c1.svg)](http://www.typescriptlang.org/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 A fluent, type-safe API for time duration calculations in TypeScript with full ISO 8601 support.
 
 ## ✨ Features

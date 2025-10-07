@@ -1,13 +1,18 @@
 {
   "name": "timesmith",
   "type": "module",
-  "version": "2.1.1",
+  "version": "2.1.2",
+  "packageManager": "pnpm@10.18.1+sha512.77a884a165cbba2d8d1c19e3b4880eee6d2fcabd0d879121e282196b80042351d5eb3ca0935fa599da1dc51265cc68816ad2bddd2a2de5ea9fdf92adbec7cd34",
   "description": "A fluent API for time duration calculations",
-  "author": "Your Name",
+  "author": "Hammer Ádám",
   "license": "MIT",
+  "homepage": "https://github.com/hammeradam/timesmith#readme",
   "repository": {
     "type": "git",
-    "url": "https://github.com/hammeradam/timesmith"
+    "url": "git+https://github.com/hammeradam/timesmith.git"
+  },
+  "bugs": {
+    "url": "https://github.com/hammeradam/timesmith/issues"
   },
   "keywords": [
     "time",
@@ -16,12 +21,30 @@
     "typescript",
     "builder"
   ],
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./build/index.d.mts",
+        "default": "./build/index.mjs"
+      },
+      "require": {
+        "types": "./build/index.d.ts",
+        "default": "./build/index.js"
+      }
+    }
+  },
   "main": "dist/index.js",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
   "files": [
+    "LICENSE",
+    "README.md",
     "dist"
   ],
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=8.0.0"
+  },
   "scripts": {
     "build": "tsup src/index.ts --format cjs,esm --dts",
     "lint": "eslint",
