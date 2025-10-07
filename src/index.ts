@@ -60,6 +60,17 @@ export interface ToStringOptions {
   translations?: Translations;
 }
 
+export interface ToISO8601StringOptions {
+  /**
+   * Use short or long unit forms
+   * @default 'long'
+   * @example
+   * 'short' - 1DT0.5S
+   * 'long' - P0Y0M0W1DT0H0M0.5S
+   */
+  format?: 'short' | 'long';
+}
+
 export interface BuildOptions {
   /**
    * The unit to convert the final result to
@@ -166,11 +177,25 @@ export interface TimeBuilder {
    */
   toString: (options?: ToStringOptions) => string;
   /**
+   * Converts the time object to an ISO 8601 string
+   * @example time().day(1).hour(2).toISO8601String() // Returns "P1DT2H"
+   * @returns A ISO 8601 string
+   */
+  toISO8601String: (toISO8601StringOptions?: ToISO8601StringOptions) => string;
+  /**
    * Parses a time string and returns a time object
    * @param timeString - Time string to parse
    * @example time().fromString('1d 2h 30m').build() // Returns 94200 (seconds)
    * @returns A time object
+   */
   fromString: (timeString: string) => TimeBuilder;
+  /**
+   * Parses an ISO 8601 string and returns a time object
+   * @param timeString
+   * @example time().fromISO8601String('P1DT2H30M').build() // Returns 94200 (seconds)
+   * @returns
+   */
+  fromISO8601String: (timeString: string) => TimeBuilder;
   /**
    * Builds a time object from the given options
    * @param options - Configuration options for the time builder
@@ -211,6 +236,8 @@ export interface TimeBuilder {
 }
 
 const TIME_CONSTANTS = {
+  YEAR_IN_MS: 365 * 24 * 60 * 60 * 1000,
+  MONTH_IN_MS: 30 * 24 * 60 * 60 * 1000,
   WEEK_IN_MS: 7 * 24 * 60 * 60 * 1000,
   DAY_IN_MS: 24 * 60 * 60 * 1000,
   HOUR_IN_MS: 60 * 60 * 1000,
@@ -367,13 +394,114 @@ function fromString(timeString: string) {
   return time({ ms: totalMs });
 }
 
-/**
- * Builds a time object from the given options
- * @param currentMs - Current time in milliseconds
- * @param options - Configuration options for the time builder
- * @param options.unit - Target unit for conversion (default: 's')
- * @returns A time object
- */
+function toISO8601String(currentMs: number, toISO8601StringOptions?: ToStringOptions) {
+  const { format = 'long' } = toISO8601StringOptions || {};
+  let remaining = currentMs;
+
+  const unitMap = {
+    year: { abbr: 'Y', ms: TIME_CONSTANTS.YEAR_IN_MS },
+    month: { abbr: 'M', ms: TIME_CONSTANTS.MONTH_IN_MS },
+    week: { abbr: 'W', ms: TIME_CONSTANTS.WEEK_IN_MS },
+    day: { abbr: 'D', ms: TIME_CONSTANTS.DAY_IN_MS },
+    hour: { abbr: 'H', ms: TIME_CONSTANTS.HOUR_IN_MS },
+    minute: { abbr: 'M', ms: TIME_CONSTANTS.MINUTE_IN_MS },
+    second: { abbr: 'S', ms: TIME_CONSTANTS.SECOND_IN_MS },
+  } as const;
+
+  let result = 'P';
+
+  for (const [_, { abbr, ms: unitMs }] of Object.entries(
+    unitMap,
+  )) {
+    if (abbr === 'S') {
+      const amount = remaining / unitMs;
+
+      if (amount > 0 || format === 'long') {
+        result += `${amount}${abbr}`;
+      }
+    }
+    else {
+      const amount = Math.floor(remaining / unitMs);
+
+      if (amount > 0 || format === 'long') {
+        result += `${amount}${abbr}`;
+      }
+    }
+
+    if (abbr === 'D') {
+      result += 'T';
+    }
+
+    remaining %= unitMs;
+  }
+
+  return result;
+}
+
+function fromISO8601String(timeString: string) {
+  let totalMs = 0;
+
+  // Validate the string starts with 'P'
+  if (!timeString.startsWith('P')) {
+    throw new Error(`Invalid ISO 8601 duration string: ${timeString}. Must start with 'P'.`);
+  }
+
+  const largeUnitMap = {
+    Y: TIME_CONSTANTS.YEAR_IN_MS,
+    M: TIME_CONSTANTS.MONTH_IN_MS,
+    W: TIME_CONSTANTS.WEEK_IN_MS,
+    D: TIME_CONSTANTS.DAY_IN_MS,
+  } as const;
+
+  const smallUnitMap = {
+    H: TIME_CONSTANTS.HOUR_IN_MS,
+    M: TIME_CONSTANTS.MINUTE_IN_MS,
+    S: TIME_CONSTANTS.SECOND_IN_MS,
+  } as const;
+
+  // Split by 'T' to separate date and time parts
+  const [datePart, timePart] = timeString.split('T');
+
+  // Remove the 'P' prefix from date part
+  const dateString = datePart.substring(1);
+
+  // Parse date part (P[n]Y[n]M[n]W[n]D)
+  if (dateString) {
+    const dateRegex = /(\d+(?:\.\d+)?)([YMWD])/g;
+    const matches = [...dateString.matchAll(dateRegex)];
+
+    for (const match of matches) {
+      const value = Number.parseFloat(match[1]);
+      const unit = match[2] as keyof typeof largeUnitMap;
+
+      if (!Number.isFinite(value) || value < 0) {
+        throw new Error(`Invalid value in ISO 8601 duration: ${value}${unit}`);
+      }
+
+      totalMs += value * largeUnitMap[unit];
+    }
+  }
+
+  // Parse time part (T[n]H[n]M[n]S)
+  if (timePart) {
+    const timeRegex = /(\d+(?:\.\d+)?)([HMS])/g;
+    const matches = [...timePart.matchAll(timeRegex)];
+
+    for (const match of matches) {
+      const value = Number.parseFloat(match[1]);
+      const unit = match[2] as keyof typeof smallUnitMap;
+
+      if (!Number.isFinite(value) || value < 0) {
+        throw new Error(`Invalid value in ISO 8601 duration: ${value}${unit}`);
+      }
+
+      totalMs += value * smallUnitMap[unit];
+    }
+  }
+
+  return time({ ms: totalMs });
+}
+
 function build(currentMs: number, options: BuildOptions = {}) {
   const { unit = 's' } = options;
   return convertToUnit(currentMs, unit);
@@ -408,7 +536,7 @@ function build(currentMs: number, options: BuildOptions = {}) {
 export function time(options?: TimeOptions): TimeBuilder {
   const { ms = 0 } = options || {};
 
-  const builder = {
+  return {
     week: (weeks = 1) => addWeeks(ms, weeks),
     addWeeks: (weeks = 1) => addWeeks(ms, weeks),
     day: (days = 1) => addDays(ms, days),
@@ -423,6 +551,8 @@ export function time(options?: TimeOptions): TimeBuilder {
     addMilliseconds: (milliseconds = 1) => addMilliseconds(ms, milliseconds),
     toString: (toStringOptions?: ToStringOptions) => toString(ms, toStringOptions),
     fromString: (timeString: string) => fromString(timeString),
+    toISO8601String: (toISO8601StringOptions?: ToISO8601StringOptions) => toISO8601String(ms, toISO8601StringOptions),
+    fromISO8601String: (timeString: string) => fromISO8601String(timeString),
     toWeeks: () => ms / TIME_CONSTANTS.WEEK_IN_MS,
     toDays: () => ms / TIME_CONSTANTS.DAY_IN_MS,
     toHours: () => ms / TIME_CONSTANTS.HOUR_IN_MS,
@@ -431,6 +561,4 @@ export function time(options?: TimeOptions): TimeBuilder {
     toMilliseconds: () => ms,
     build: (options: BuildOptions = {}) => build(ms, options),
   };
-
-  return builder;
 }

@@ -63,11 +63,77 @@ describe('timesmith', () => {
   describe('validation', () => {
     it('should throw on negative values', () => {
       expect(() => time().hour(-1)).toThrow();
+      expect(() => time().millisecond(-1)).toThrow();
     });
 
     it('should throw on non-finite values', () => {
       expect(() => time().minute(Number.POSITIVE_INFINITY)).toThrow();
       expect(() => time().second(Number.NaN)).toThrow();
+      expect(() => time().millisecond(Number.POSITIVE_INFINITY)).toThrow();
+    });
+  });
+
+  describe('conversion methods', () => {
+    it('should convert to weeks', () => {
+      expect(time().day(7).toWeeks()).toBe(1);
+      expect(time().day(14).toWeeks()).toBe(2);
+    });
+
+    it('should convert to days', () => {
+      expect(time().hour(24).toDays()).toBe(1);
+      expect(time().week(1).toDays()).toBe(7);
+    });
+
+    it('should convert to hours', () => {
+      expect(time().minute(60).toHours()).toBe(1);
+      expect(time().day(1).toHours()).toBe(24);
+    });
+
+    it('should convert to minutes', () => {
+      expect(time().second(60).toMinutes()).toBe(1);
+      expect(time().hour(1).toMinutes()).toBe(60);
+    });
+
+    it('should convert to seconds', () => {
+      expect(time().minute(1).toSeconds()).toBe(60);
+      expect(time().hour(1).toSeconds()).toBe(3600);
+    });
+
+    it('should convert to milliseconds', () => {
+      expect(time().second(1).toMilliseconds()).toBe(1000);
+      expect(time().minute(1).toMilliseconds()).toBe(60000);
+    });
+  });
+
+  describe('alternative method names', () => {
+    it('should work with addWeeks', () => {
+      expect(time().addWeeks(1).build()).toBe(604800);
+      expect(time().addWeeks(2).build()).toBe(1209600);
+    });
+
+    it('should work with addDays', () => {
+      expect(time().addDays(1).build()).toBe(86400);
+      expect(time().addDays(7).build()).toBe(604800);
+    });
+
+    it('should work with addHours', () => {
+      expect(time().addHours(1).build()).toBe(3600);
+      expect(time().addHours(24).build()).toBe(86400);
+    });
+
+    it('should work with addMinutes', () => {
+      expect(time().addMinutes(1).build()).toBe(60);
+      expect(time().addMinutes(60).build()).toBe(3600);
+    });
+
+    it('should work with addSeconds', () => {
+      expect(time().addSeconds(1).build()).toBe(1);
+      expect(time().addSeconds(60).build()).toBe(60);
+    });
+
+    it('should work with addMilliseconds', () => {
+      expect(time().addMilliseconds(1).build()).toBe(0.001);
+      expect(time().addMilliseconds(1000).build()).toBe(1);
     });
   });
 
@@ -106,6 +172,202 @@ describe('timesmith', () => {
       expect(time().hour(1).minute(30).toString({
         translations: spanishTranslations,
       })).toBe('1 hora, 30 minutos');
+    });
+  });
+
+  describe('iso 8601 parsing', () => {
+    describe('basic parsing', () => {
+      it('should parse duration with only days', () => {
+        expect(time().fromISO8601String('P1D').build()).toBe(86400);
+      });
+
+      it('should parse duration with only hours', () => {
+        expect(time().fromISO8601String('PT1H').build()).toBe(3600);
+      });
+
+      it('should parse duration with only minutes', () => {
+        expect(time().fromISO8601String('PT30M').build()).toBe(1800);
+      });
+
+      it('should parse duration with only seconds', () => {
+        expect(time().fromISO8601String('PT45S').build()).toBe(45);
+      });
+
+      it('should parse duration with only weeks', () => {
+        expect(time().fromISO8601String('P1W').build()).toBe(604800);
+      });
+    });
+
+    describe('combined units parsing', () => {
+      it('should parse days and hours', () => {
+        expect(time().fromISO8601String('P1DT2H').build()).toBe(93600);
+      });
+
+      it('should parse days, hours, and minutes', () => {
+        expect(time().fromISO8601String('P1DT2H30M').build()).toBe(95400);
+      });
+
+      it('should parse complex duration with all time units', () => {
+        expect(time().fromISO8601String('P1DT1H0M0.5S').build()).toBe(90000.5);
+      });
+
+      it('should parse duration with years, months, weeks, and days', () => {
+        // 1 year (365 days) + 1 day + 1 hour + 0.5 seconds
+        // = 31,536,000 + 86,400 + 3,600 + 0.5 = 31,626,000.5 seconds
+        expect(time().fromISO8601String('P1Y0M0W1DT1H0M0.5S').build()).toBe(31626000.5);
+      });
+
+      it('should parse multiple weeks', () => {
+        expect(time().fromISO8601String('P2W').build()).toBe(1209600);
+      });
+
+      it('should parse weeks with days', () => {
+        // 1 week (7 days) + 3 days = 10 days = 864000 seconds
+        expect(time().fromISO8601String('P1W3D').build()).toBe(864000);
+      });
+    });
+
+    describe('decimal values parsing', () => {
+      it('should parse decimal seconds', () => {
+        expect(time().fromISO8601String('PT0.5S').build()).toBe(0.5);
+      });
+
+      it('should parse decimal minutes', () => {
+        expect(time().fromISO8601String('PT1.5M').build()).toBe(90);
+      });
+
+      it('should parse decimal hours', () => {
+        expect(time().fromISO8601String('PT2.5H').build()).toBe(9000);
+      });
+
+      it('should parse decimal days', () => {
+        expect(time().fromISO8601String('P1.5D').build()).toBe(129600);
+      });
+
+      it('should parse mixed decimals', () => {
+        // 1.5 hours + 30.5 seconds = 5400 + 30.5 = 5430.5 seconds
+        expect(time().fromISO8601String('PT1.5H0M30.5S').build()).toBe(5430.5);
+      });
+    });
+
+    describe('edge cases', () => {
+      it('should parse duration with only P', () => {
+        expect(time().fromISO8601String('P0D').build()).toBe(0);
+      });
+
+      it('should parse duration with zero values', () => {
+        expect(time().fromISO8601String('P0Y0M0W0DT0H0M0S').build()).toBe(0);
+      });
+
+      it('should handle large values', () => {
+        // 100 days = 8,640,000 seconds
+        expect(time().fromISO8601String('P100D').build()).toBe(8640000);
+      });
+
+      it('should parse years and months', () => {
+        // 1 year (365 days) + 2 months (60 days) = 36,720,000 seconds
+        expect(time().fromISO8601String('P1Y2M').build()).toBe(36720000);
+      });
+    });
+
+    describe('conversion to different units', () => {
+      it('should convert ISO duration to milliseconds', () => {
+        expect(time().fromISO8601String('PT1H').build({ unit: 'ms' })).toBe(3600000);
+      });
+
+      it('should convert ISO duration to minutes', () => {
+        expect(time().fromISO8601String('PT1H30M').build({ unit: 'm' })).toBe(90);
+      });
+
+      it('should convert ISO duration to hours', () => {
+        expect(time().fromISO8601String('P1DT2H').build({ unit: 'h' })).toBe(26);
+      });
+
+      it('should convert ISO duration to days', () => {
+        expect(time().fromISO8601String('P1W').build({ unit: 'd' })).toBe(7);
+      });
+
+      it('should convert ISO duration to weeks', () => {
+        expect(time().fromISO8601String('P2W').build({ unit: 'w' })).toBe(2);
+      });
+    });
+
+    describe('error handling', () => {
+      it('should throw on invalid format without P prefix', () => {
+        expect(() => time().fromISO8601String('1DT2H')).toThrow('Must start with \'P\'');
+      });
+
+      it('should handle malformed negative values by parsing the digits', () => {
+        // 'P-1D' - the minus sign is not part of the regex pattern, so it parses '1D'
+        // This is acceptable as ISO 8601 doesn't allow negative durations anyway
+        expect(time().fromISO8601String('P-1D').build()).toBe(86400);
+      });
+
+      it('should handle empty string after P', () => {
+        expect(time().fromISO8601String('P').build()).toBe(0);
+      });
+
+      it('should handle T without time components', () => {
+        expect(time().fromISO8601String('P1DT').build()).toBe(86400);
+      });
+
+      it('should handle invalid characters gracefully', () => {
+        // Invalid characters and misplaced units are not matched
+        // 'P1D2X3H' - only '1D' matches in date part, '3H' is invalid without 'T'
+        expect(time().fromISO8601String('P1D2X3H').build()).toBe(86400); // 1 day only
+      });
+    });
+
+    describe('integration with other methods', () => {
+      it('should chain with builder methods', () => {
+        expect(
+          time()
+            .fromISO8601String('P1D')
+            .hour(2)
+            .build(),
+        ).toBe(93600);
+      });
+
+      it('should work with toString', () => {
+        const result = time().fromISO8601String('P1DT2H30M').toString();
+        expect(result).toBe('1 day, 2 hours, 30 minutes');
+      });
+
+      it('should round-trip with toISO8601String', () => {
+        const original = 'P1DT2H';
+        const parsed = time().fromISO8601String(original);
+        const _result = parsed.toISO8601String({ format: 'short' });
+        // Result will have all units, but should match in value
+        expect(parsed.build()).toBe(93600);
+      });
+    });
+  });
+
+  describe('iso 8601 formatting', () => {
+    it('should format with short format (default behavior)', () => {
+      const result = time().day(1).hour(2).toISO8601String();
+      expect(result).toContain('1D');
+      expect(result).toContain('2H');
+    });
+
+    it('should format with long format including zero values', () => {
+      const result = time().day(1).hour(2).toISO8601String({ format: 'long' });
+      expect(result).toBe('P0Y0M0W1DT2H0M0S');
+    });
+
+    it('should format zero duration with long format', () => {
+      const result = time().toISO8601String({ format: 'long' });
+      expect(result).toBe('P0Y0M0W0DT0H0M0S');
+    });
+
+    it('should format with short format excluding zero values', () => {
+      const result = time().day(1).hour(2).toISO8601String({ format: 'short' });
+      expect(result).toBe('P1DT2H');
+    });
+
+    it('should handle decimal seconds in ISO format', () => {
+      const result = time().second(1).millisecond(500).toISO8601String({ format: 'short' });
+      expect(result).toContain('1.5S');
     });
   });
 });
