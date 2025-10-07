@@ -1,6 +1,6 @@
 ---
 name: Feature Request
-about: Suggest an idea for ts-ping
+about: Suggest an idea for timesmith
 title: '[FEATURE] '
 labels: 'enhancement'
 assignees: ''
@@ -20,9 +20,9 @@ Describe the solution you'd like to see implemented.
 
 ```typescript
 // Example of how the feature might be used
-import { Ping } from 'ts-ping';
+import { time } from 'timesmith';
 
-const ping = new Ping('example.com');
+const duration = time({ h: 2, m: 30 });
 // Your proposed API usage here
 ```
 

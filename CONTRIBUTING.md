@@ -13,7 +13,6 @@ This project adheres to a code of conduct that all contributors are expected to 
 - Node.js 20 or higher
 - pnpm 8 or higher (recommended) or npm
 - TypeScript 5+
-- macOS, Linux, or Windows (for testing ping functionality)
 
 ### Development Setup
 
@@ -68,17 +67,17 @@ pnpm run lint:fix
 ### Branch Naming
 
 Use descriptive branch names:
-- `feature/add-ipv6-support`
-- `fix/timeout-handling`
+- `feature/add-duration-format`
+- `fix/iso8601-parsing`
 - `docs/update-readme`
 
 ### Commit Messages
 
 Follow conventional commit format:
-- `feat: add IPv6 support`
-- `fix: handle timeout edge cases`
+- `feat: add duration formatting options`
+- `fix: handle edge cases in time parsing`
 - `docs: update API documentation`
-- `test: add async ping tests`
+- `test: add arithmetic operation tests`
 
 ### Code Standards
 
@@ -89,7 +88,7 @@ Follow conventional commit format:
 
 ### Testing Requirements
 
-- Maintain or improve test coverage (currently 94%+)
+- Maintain or improve test coverage (currently 100%)
 - Add unit tests for new functionality
 - Add integration tests for new features
 - Ensure all existing tests continue to pass
@@ -146,18 +145,24 @@ Documentation improvements are always welcome:
 
 ### Key Components
 
-- **`Ping` class**: Main interface with fluent API
-- **`PingResult` classes**: Type-safe result handling with discriminated unions
-- **`PingResultLine`**: Individual ping response parsing
-- **Error handling**: Comprehensive error types and detection
+- **`time()` function**: Main entry point for creating time durations
+- **`TimeBuilder` interface**: Fluent API for building and manipulating durations
+- **Time unit methods**: week(), day(), hour(), minute(), second(), millisecond()
+- **Conversion methods**: toWeeks(), toDays(), toHours(), toMinutes(), toSeconds(), toMilliseconds()
+- **Arithmetic operations**: add(), subtract()
+- **Comparison operations**: isLessThan(), isGreaterThan(), equals(), isBetween()
+- **String formatting**: toString(), toISO8601String()
+- **String parsing**: fromString(), fromISO8601String()
+- **Input validation**: Runtime validation with clear error messages
 
 ### Design Principles
 
-- **Type Safety**: Leverage TypeScript's type system
-- **Immutability**: Readonly properties where possible
-- **Fluent Interface**: Method chaining for configuration
-- **Cross-Platform**: Support Windows, macOS, and Linux
-- **Async Support**: Both sync and async execution modes
+- **Type Safety**: Leverage TypeScript's type system for compile-time checks
+- **Immutability**: Each operation returns a new TimeBuilder instance
+- **Fluent Interface**: Method chaining for natural duration building
+- **Zero Dependencies**: Lightweight with no external runtime dependencies
+- **ISO 8601 Support**: Full support for ISO 8601 duration format
+- **i18n Ready**: Customizable translations for human-readable output
 
 ## Release Process
 

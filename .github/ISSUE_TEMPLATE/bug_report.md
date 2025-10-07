@@ -1,6 +1,6 @@
 ---
 name: Bug Report
-about: Create a report to help us improve ts-ping
+about: Create a report to help us improve timesmith
 title: '[BUG] '
 labels: 'bug'
 assignees: ''
@@ -14,7 +14,7 @@ A clear and concise description of what the bug is.
 
 Steps to reproduce the behavior:
 
-1. Install ts-ping version: `X.X.X`
+1. Install timesmith version: `X.X.X`
 2. Run the following code:
    ```typescript
    // Your code here
@@ -33,18 +33,17 @@ What actually happened instead.
 
 - **OS**: [e.g. macOS 14.0, Ubuntu 22.04]
 - **Node.js version**: [e.g. 20.17.0]
-- **ts-ping version**: [e.g. 1.0.0]
-- **TypeScript version**: [e.g. 5.2.0]
+- **timesmith version**: [e.g. 2.4.0]
+- **TypeScript version**: [e.g. 5.3.3]
 
 ## Code Sample
 
 ```typescript
 // Minimal reproducible example
-import { Ping } from 'ts-ping';
+import { time } from 'timesmith';
 
-const ping = new Ping('example.com');
-const result = ping.run();
-console.log(result);
+const duration = time({ h: 1, m: 30 }).build();
+console.log(duration); // Expected: 5400
 ```
 
 ## Error Messages
