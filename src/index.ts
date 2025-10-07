@@ -111,92 +111,79 @@ export interface BuildOptions {
   unit?: TimeUnit;
 }
 
-/**
- * Base type for duration that only exposes the toMilliseconds method
- * Used for accepting any TimeBuilder variant in arithmetic and comparison operations
- */
-export type BaseTimeBuilder = Pick<TimeBuilder, 'toMilliseconds'>;
-
-interface TimeBuilderWeek extends Omit<TimeBuilder, 'week' | 'addWeeks'> {}
-interface TimeBuilderDay extends Omit<TimeBuilder, 'week' | 'addWeeks' | 'day' | 'addDays'> {}
-interface TimeBuilderHour extends Omit<TimeBuilder, 'week' | 'addWeeks' | 'day' | 'addDays' | 'hour' | 'addHours'> {}
-interface TimeBuilderMinute extends Omit<TimeBuilder, 'week' | 'addWeeks' | 'day' | 'addDays' | 'hour' | 'addHours' | 'minute' | 'addMinutes'> {}
-interface TimeBuilderSecond extends Omit<TimeBuilder, 'week' | 'addWeeks' | 'day' | 'addDays' | 'hour' | 'addHours' | 'minute' | 'addMinutes' | 'second' | 'addSeconds'> {}
-interface TimeBuilderMillisecond extends Omit<TimeBuilder, 'week' | 'addWeeks' | 'day' | 'addDays' | 'hour' | 'addHours' | 'minute' | 'addMinutes' | 'second' | 'addSeconds' | 'millisecond' | 'addMilliseconds'> {}
-
 export interface TimeBuilder {
   /**
    * Adds weeks to the time object
    * @param weeks - Number of weeks to add
    * @returns A time object
    */
-  week: (weeks?: number) => TimeBuilderWeek;
+  week: (weeks?: number) => TimeBuilder;
   /**
    * Adds weeks to the time object
    * @param weeks - Number of weeks to add
    * @returns A time object
    */
-  addWeeks: (weeks?: number) => TimeBuilderWeek;
+  addWeeks: (weeks?: number) => TimeBuilder;
   /**
    * Adds days to the time object
    * @param days - Number of days to add
    * @returns A time object
    */
-  day: (days?: number) => TimeBuilderDay;
+  day: (days?: number) => TimeBuilder;
   /**
    * Adds days to the time object
    * @param days - Number of days to add
    * @returns A time object
    */
-  addDays: (days?: number) => TimeBuilderDay;
+  addDays: (days?: number) => TimeBuilder;
   /**
    * Adds hours to the time object
    * @param hours - Number of hours to add
    * @returns A time object
    */
-  hour: (hours?: number) => TimeBuilderHour;
+  hour: (hours?: number) => TimeBuilder;
   /**
    * Adds hours to the time object
    * @param hours - Number of hours to add
    * @returns A time object
    */
-  addHours: (hours?: number) => TimeBuilderHour;
+  addHours: (hours?: number) => TimeBuilder;
   /**
    * Adds minutes to the time object
    * @param minutes - Number of minutes to add
    * @returns A time object
    */
-  minute: (minutes?: number) => TimeBuilderMinute;
+  minute: (minutes?: number) => TimeBuilder;
   /**
    * Adds minutes to the time object
    * @param minutes - Number of minutes to add
    * @returns A time object
    */
-  addMinutes: (minutes?: number) => TimeBuilderMinute;
+  addMinutes: (minutes?: number) => TimeBuilder;
   /**
    * Adds seconds to the time object
    * @param seconds - Number of seconds to add
    * @returns A time object
    */
-  second: (seconds?: number) => TimeBuilderSecond;
+  second: (seconds?: number) => TimeBuilder;
   /**
    * Adds seconds to the time object
    * @param seconds - Number of seconds to add
    * @returns A time object
    */
-  addSeconds: (seconds?: number) => TimeBuilderSecond;
+  addSeconds: (seconds?: number) => TimeBuilder;
   /**
    * Adds milliseconds to the time object
    * @param milliseconds - Number of milliseconds to add
    * @returns A time object
    */
-  millisecond: (milliseconds?: number) => TimeBuilderMillisecond;
+  millisecond: (milliseconds?: number) => TimeBuilder;
   /**
    * Adds milliseconds to the time object
    * @param milliseconds - Number of milliseconds to add
    * @returns A time object
    */
-  addMilliseconds: (milliseconds?: number) => TimeBuilderMillisecond;
+  addMilliseconds: (milliseconds?: number) => TimeBuilder;
   /**
    * Converts the time object to a human readable string
    * @param options - Configuration options for the time builder
@@ -266,53 +253,53 @@ export interface TimeBuilder {
   toMilliseconds: () => number;
   /**
    * Adds another duration to the current duration
-   * @param duration - The duration to add (any TimeBuilder variant)
+   * @param duration - The duration to add (any TimeBuilder instance)
    * @returns A new time object with the combined duration
    * @example time().hour(1).add(time().minute(30)) // Returns 1 hour 30 minutes
    */
-  add: (duration: BaseTimeBuilder) => TimeBuilder;
+  add: (duration: TimeBuilder) => TimeBuilder;
   /**
    * Subtracts another duration from the current duration
-   * @param duration - The duration to subtract (any TimeBuilder variant)
+   * @param duration - The duration to subtract (any TimeBuilder instance)
    * @returns A new time object with the result (minimum 0)
    * @example time().hour(2).subtract(time().minute(30)) // Returns 1 hour 30 minutes
    */
-  subtract: (duration: BaseTimeBuilder) => TimeBuilder;
+  subtract: (duration: TimeBuilder) => TimeBuilder;
   /**
    * Checks if the current duration is less than another duration
    * @param duration - The duration to compare against
    * @returns True if current duration is less than the provided duration
    * @example time().hour(1).isLessThan(time().hour(2)) // true
    */
-  isLessThan: (duration: BaseTimeBuilder) => boolean;
+  isLessThan: (duration: TimeBuilder) => boolean;
   /**
    * Checks if the current duration is less than or equal to another duration
    * @param duration - The duration to compare against
    * @returns True if current duration is less than or equal to the provided duration
    * @example time().hour(1).isLessThanOrEqual(time().hour(1)) // true
    */
-  isLessThanOrEqual: (duration: BaseTimeBuilder) => boolean;
+  isLessThanOrEqual: (duration: TimeBuilder) => boolean;
   /**
    * Checks if the current duration is greater than another duration
    * @param duration - The duration to compare against
    * @returns True if current duration is greater than the provided duration
    * @example time().hour(2).isGreaterThan(time().hour(1)) // true
    */
-  isGreaterThan: (duration: BaseTimeBuilder) => boolean;
+  isGreaterThan: (duration: TimeBuilder) => boolean;
   /**
    * Checks if the current duration is greater than or equal to another duration
    * @param duration - The duration to compare against
    * @returns True if current duration is greater than or equal to the provided duration
    * @example time().hour(2).isGreaterThanOrEqual(time().hour(2)) // true
    */
-  isGreaterThanOrEqual: (duration: BaseTimeBuilder) => boolean;
+  isGreaterThanOrEqual: (duration: TimeBuilder) => boolean;
   /**
    * Checks if the current duration equals another duration
    * @param duration - The duration to compare against
    * @returns True if durations are equal
    * @example time().hour(1).equals(time().minute(60)) // true
    */
-  equals: (duration: BaseTimeBuilder) => boolean;
+  equals: (duration: TimeBuilder) => boolean;
   /**
    * Checks if the current duration is between two other durations (inclusive)
    * @param min - The minimum duration
@@ -320,7 +307,7 @@ export interface TimeBuilder {
    * @returns True if current duration is between min and max (inclusive)
    * @example time().hour(2).isBetween(time().hour(1), time().hour(3)) // true
    */
-  isBetween: (min: BaseTimeBuilder, max: BaseTimeBuilder) => boolean;
+  isBetween: (min: TimeBuilder, max: TimeBuilder) => boolean;
 }
 
 const TIME_CONSTANTS = {
@@ -595,41 +582,41 @@ function build(currentMs: number, options: BuildOptions = {}) {
   return convertToUnit(currentMs, unit);
 }
 
-function add(currentMs: number, duration: BaseTimeBuilder) {
+function add(currentMs: number, duration: TimeBuilder) {
   const durationMs = duration.toMilliseconds();
   return time({ ms: currentMs + durationMs });
 }
 
-function subtract(currentMs: number, duration: BaseTimeBuilder) {
+function subtract(currentMs: number, duration: TimeBuilder) {
   const durationMs = duration.toMilliseconds();
   // Ensure result is not negative
   return time({ ms: Math.max(0, currentMs - durationMs) });
 }
 
-function isLessThan(currentMs: number, duration: BaseTimeBuilder) {
+function isLessThan(currentMs: number, duration: TimeBuilder) {
   return currentMs < duration.toMilliseconds();
 }
 
-function isLessThanOrEqual(currentMs: number, duration: BaseTimeBuilder) {
+function isLessThanOrEqual(currentMs: number, duration: TimeBuilder) {
   return currentMs <= duration.toMilliseconds();
 }
 
-function isGreaterThan(currentMs: number, duration: BaseTimeBuilder) {
+function isGreaterThan(currentMs: number, duration: TimeBuilder) {
   return currentMs > duration.toMilliseconds();
 }
 
-function isGreaterThanOrEqual(currentMs: number, duration: BaseTimeBuilder) {
+function isGreaterThanOrEqual(currentMs: number, duration: TimeBuilder) {
   return currentMs >= duration.toMilliseconds();
 }
 
-function equals(currentMs: number, duration: BaseTimeBuilder) {
+function equals(currentMs: number, duration: TimeBuilder) {
   return currentMs === duration.toMilliseconds();
 }
 
 function isBetween(
   currentMs: number,
-  min: BaseTimeBuilder,
-  max: BaseTimeBuilder,
+  min: TimeBuilder,
+  max: TimeBuilder,
 ) {
   const minMs = min.toMilliseconds();
   const maxMs = max.toMilliseconds();
@@ -702,13 +689,13 @@ export function time(options?: TimeOptions): TimeBuilder {
     toSeconds: () => totalMs / TIME_CONSTANTS.SECOND_IN_MS,
     toMilliseconds: () => totalMs,
     build: (options: BuildOptions = {}) => build(totalMs, options),
-    add: (duration: BaseTimeBuilder) => add(totalMs, duration),
-    subtract: (duration: BaseTimeBuilder) => subtract(totalMs, duration),
-    isLessThan: (duration: BaseTimeBuilder) => isLessThan(totalMs, duration),
-    isLessThanOrEqual: (duration: BaseTimeBuilder) => isLessThanOrEqual(totalMs, duration),
-    isGreaterThan: (duration: BaseTimeBuilder) => isGreaterThan(totalMs, duration),
-    isGreaterThanOrEqual: (duration: BaseTimeBuilder) => isGreaterThanOrEqual(totalMs, duration),
-    equals: (duration: BaseTimeBuilder) => equals(totalMs, duration),
-    isBetween: (min: BaseTimeBuilder, max: BaseTimeBuilder) => isBetween(totalMs, min, max),
+    add: (duration: TimeBuilder) => add(totalMs, duration),
+    subtract: (duration: TimeBuilder) => subtract(totalMs, duration),
+    isLessThan: (duration: TimeBuilder) => isLessThan(totalMs, duration),
+    isLessThanOrEqual: (duration: TimeBuilder) => isLessThanOrEqual(totalMs, duration),
+    isGreaterThan: (duration: TimeBuilder) => isGreaterThan(totalMs, duration),
+    isGreaterThanOrEqual: (duration: TimeBuilder) => isGreaterThanOrEqual(totalMs, duration),
+    equals: (duration: TimeBuilder) => equals(totalMs, duration),
+    isBetween: (min: TimeBuilder, max: TimeBuilder) => isBetween(totalMs, min, max),
   };
 }

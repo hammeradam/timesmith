@@ -609,21 +609,6 @@ time().hour(4).isBetween(time().hour(1), time().hour(3)); // false
 
 ## Type Safety & Validation
 
-### Progressive API
-
-The TimeBuilder interface progressively removes methods as you use them, preventing invalid combinations:
-
-```typescript
-time()
-  .week(1) // ✅ Can use week()
-  .week(1); // ❌ TypeScript error - week() no longer available
-
-time()
-  .day(1) // ✅ Can use day()
-  .hour(2) // ✅ Can use hour()
-  .day(1); // ❌ TypeScript error - day() no longer available
-```
-
 ### Input Validation
 
 All methods validate inputs at runtime:
