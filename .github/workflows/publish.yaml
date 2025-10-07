@@ -29,3 +29,37 @@ jobs:
       - run: pnpm publish --no-git-checks
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Get package version
+        id: package_version
+        run: echo "version=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
+
+      - name: Create Git Tag
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -a "v${{ steps.package_version.outputs.version }}" -m "Release v${{ steps.package_version.outputs.version }}"
+          git push origin "v${{ steps.package_version.outputs.version }}"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.package_version.outputs.version }}
+          name: Release v${{ steps.package_version.outputs.version }}
+          generate_release_notes: true
+          body: |
+            ## 📦 NPM Package
+            This version has been published to npm: [timesmith@${{ steps.package_version.outputs.version }}](https://www.npmjs.com/package/timesmith/v/${{ steps.package_version.outputs.version }})
+
+            Install with:
+            ```bash
+            npm install timesmith@${{ steps.package_version.outputs.version }}
+            # or
+            pnpm add timesmith@${{ steps.package_version.outputs.version }}
+            # or
+            bun add timesmith@${{ steps.package_version.outputs.version }}
+            ```
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
