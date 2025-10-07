@@ -233,6 +233,20 @@ export interface TimeBuilder {
    * @returns The number of milliseconds in the time object
    */
   toMilliseconds: () => number;
+  /**
+   * Adds another duration to the current duration
+   * @param duration - The duration to add (any TimeBuilder variant)
+   * @returns A new time object with the combined duration
+   * @example time().hour(1).add(time().minute(30)) // Returns 1 hour 30 minutes
+   */
+  add: (duration: Pick<TimeBuilder, 'toMilliseconds'>) => TimeBuilder;
+  /**
+   * Subtracts another duration from the current duration
+   * @param duration - The duration to subtract (any TimeBuilder variant)
+   * @returns A new time object with the result (minimum 0)
+   * @example time().hour(2).subtract(time().minute(30)) // Returns 1 hour 30 minutes
+   */
+  subtract: (duration: Pick<TimeBuilder, 'toMilliseconds'>) => TimeBuilder;
 }
 
 const TIME_CONSTANTS = {
@@ -507,6 +521,17 @@ function build(currentMs: number, options: BuildOptions = {}) {
   return convertToUnit(currentMs, unit);
 }
 
+function add(currentMs: number, duration: Pick<TimeBuilder, 'toMilliseconds'>) {
+  const durationMs = duration.toMilliseconds();
+  return time({ ms: currentMs + durationMs });
+}
+
+function subtract(currentMs: number, duration: Pick<TimeBuilder, 'toMilliseconds'>) {
+  const durationMs = duration.toMilliseconds();
+  // Ensure result is not negative
+  return time({ ms: Math.max(0, currentMs - durationMs) });
+}
+
 /**
  * Creates a time builder for converting between different time units
  * @param options - Configuration options for the time builder
@@ -560,5 +585,7 @@ export function time(options?: TimeOptions): TimeBuilder {
     toSeconds: () => ms / TIME_CONSTANTS.SECOND_IN_MS,
     toMilliseconds: () => ms,
     build: (options: BuildOptions = {}) => build(ms, options),
+    add: (duration: Pick<TimeBuilder, 'toMilliseconds'>) => add(ms, duration),
+    subtract: (duration: Pick<TimeBuilder, 'toMilliseconds'>) => subtract(ms, duration),
   };
 }

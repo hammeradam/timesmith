@@ -137,6 +137,138 @@ describe('timesmith', () => {
     });
   });
 
+  describe('duration arithmetic', () => {
+    describe('add', () => {
+      it('should add two durations together', () => {
+        const duration1 = time().hour(1);
+        const duration2 = time().minute(30);
+        expect(duration1.add(duration2).build()).toBe(5400); // 1.5 hours in seconds
+      });
+
+      it('should add multiple units', () => {
+        const base = time().day(1).hour(2);
+        const toAdd = time().hour(3).minute(30);
+        expect(base.add(toAdd).build()).toBe(106200); // 1d 5h 30m
+      });
+
+      it('should handle adding zero', () => {
+        const duration = time().hour(1);
+        const zero = time();
+        expect(duration.add(zero).build()).toBe(3600);
+      });
+
+      it('should be chainable', () => {
+        const result = time()
+          .hour(1)
+          .add(time().minute(30))
+          .add(time().second(45))
+          .build();
+        expect(result).toBe(5445); // 1h 30m 45s
+      });
+
+      it('should work with fromString', () => {
+        const duration1 = time().fromString('1h 30m');
+        const duration2 = time().fromString('45m');
+        expect(duration1.add(duration2).build()).toBe(8100); // 2h 15m
+      });
+
+      it('should work with ISO8601', () => {
+        const duration1 = time().fromISO8601String('PT1H');
+        const duration2 = time().fromISO8601String('PT30M');
+        expect(duration1.add(duration2).build()).toBe(5400);
+      });
+
+      it('should preserve the result for further operations', () => {
+        const result = time().hour(1).add(time().minute(30));
+        expect(result.toString()).toBe('1 hour, 30 minutes');
+      });
+    });
+
+    describe('subtract', () => {
+      it('should subtract one duration from another', () => {
+        const duration1 = time().hour(2);
+        const duration2 = time().minute(30);
+        expect(duration1.subtract(duration2).build()).toBe(5400); // 1.5 hours
+      });
+
+      it('should handle subtracting larger from smaller (returns 0)', () => {
+        const duration1 = time().minute(30);
+        const duration2 = time().hour(1);
+        expect(duration1.subtract(duration2).build()).toBe(0);
+      });
+
+      it('should handle subtracting zero', () => {
+        const duration = time().hour(1);
+        const zero = time();
+        expect(duration.subtract(zero).build()).toBe(3600);
+      });
+
+      it('should be chainable', () => {
+        const result = time()
+          .hour(3)
+          .subtract(time().minute(30))
+          .subtract(time().minute(30))
+          .build();
+        expect(result).toBe(7200); // 2 hours
+      });
+
+      it('should work with fromString', () => {
+        const duration1 = time().fromString('2h 30m');
+        const duration2 = time().fromString('45m');
+        expect(duration1.subtract(duration2).build()).toBe(6300); // 1h 45m
+      });
+
+      it('should work with ISO8601', () => {
+        const duration1 = time().fromISO8601String('PT2H');
+        const duration2 = time().fromISO8601String('PT30M');
+        expect(duration1.subtract(duration2).build()).toBe(5400);
+      });
+
+      it('should handle exact subtraction', () => {
+        const duration1 = time().hour(1);
+        const duration2 = time().hour(1);
+        expect(duration1.subtract(duration2).build()).toBe(0);
+      });
+
+      it('should preserve the result for further operations', () => {
+        const result = time().hour(2).subtract(time().minute(30));
+        expect(result.toString()).toBe('1 hour, 30 minutes');
+      });
+    });
+
+    describe('complex arithmetic', () => {
+      it('should handle add and subtract together', () => {
+        const result = time()
+          .hour(3)
+          .add(time().minute(45))
+          .subtract(time().minute(30))
+          .build();
+        expect(result).toBe(11700); // 3h 15m
+      });
+
+      it('should work with all conversion methods', () => {
+        const result = time()
+          .day(1)
+          .add(time().hour(12))
+          .subtract(time().hour(6));
+
+        expect(result.toHours()).toBe(30);
+        expect(result.toDays()).toBe(1.25);
+        expect(result.toMinutes()).toBe(1800);
+      });
+
+      it('should maintain precision with milliseconds', () => {
+        const result = time()
+          .second(5)
+          .millisecond(500)
+          .add(time().millisecond(300))
+          .subtract(time().millisecond(100));
+
+        expect(result.build({ unit: 'ms' })).toBe(5700);
+      });
+    });
+  });
+
   describe('translations', () => {
     const spanishTranslations = {
       week: { long: { singular: 'semana', plural: 'semanas' }, short: { singular: 'sem', plural: 'sem' } },

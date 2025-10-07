@@ -93,6 +93,37 @@ const seconds = time().minute(2).toSeconds(); // 120
 const ms = time().second(1).toMilliseconds(); // 1000
 ```
 
+### Duration Arithmetic
+
+```typescript
+// Add durations together
+const meeting = time().hour(1).minute(30);
+const breakTime = time().minute(15);
+const total = meeting.add(breakTime).build(); // 6300 seconds (1h 45m)
+
+// Subtract durations
+const deadline = time().day(7);
+const elapsed = time().day(3).hour(6);
+const remaining = deadline.subtract(elapsed).toString(); // "3 days, 18 hours"
+
+// Chain multiple operations
+const result = time()
+  .hour(5)
+  .add(time().minute(45))
+  .subtract(time().minute(30))
+  .toString(); // "5 hours, 15 minutes"
+
+// Works with any duration format
+const duration1 = time().fromString('2h 30m');
+const duration2 = time().fromISO8601String('PT45M');
+duration1.add(duration2).toString(); // "3 hours, 15 minutes"
+
+// Subtract larger from smaller returns 0
+const small = time().minute(30);
+const large = time().hour(2);
+small.subtract(large).build(); // 0
+```
+
 ### String Formatting
 
 ```typescript
@@ -371,6 +402,52 @@ time().day(1).build({ unit: 'h' }); // 24 (hours)
 
 ---
 
+### Arithmetic Methods
+
+#### `add(duration): TimeBuilder`
+
+Adds another duration to the current duration.
+
+**Parameters:**
+- `duration` - Any TimeBuilder instance to add
+
+**Returns:** `TimeBuilder` - A new time builder with the combined duration
+
+**Example:**
+```typescript
+const meeting = time().hour(1).minute(30);
+const breakTime = time().minute(15);
+meeting.add(breakTime).toString(); // "1 hour, 45 minutes"
+
+// Chainable
+time()
+  .hour(2)
+  .add(time().minute(30))
+  .add(time().second(45))
+  .build(); // 9045 seconds
+```
+
+#### `subtract(duration): TimeBuilder`
+
+Subtracts another duration from the current duration.
+
+**Parameters:**
+- `duration` - Any TimeBuilder instance to subtract
+
+**Returns:** `TimeBuilder` - A new time builder with the result (minimum 0)
+
+**Example:**
+```typescript
+const total = time().hour(3);
+const used = time().minute(45);
+total.subtract(used).toString(); // "2 hours, 15 minutes"
+
+// Returns 0 if result would be negative
+time().hour(1).subtract(time().hour(2)).build(); // 0
+```
+
+---
+
 ## Type Safety & Validation
 
 ### Progressive API
@@ -454,6 +531,25 @@ const duration = time()
 const iso = time()
   .day(7)
   .toISO8601String(); // "P7D"
+```
+
+### Duration Arithmetic
+```typescript
+// Calculate total project time
+const development = time().day(5).hour(3);
+const testing = time().day(2).hour(4);
+const deployment = time().hour(8);
+
+const totalTime = development
+  .add(testing)
+  .add(deployment)
+  .toString(); // "7 days, 15 hours"
+
+// Calculate time remaining
+const allocated = time().week(2);
+const spent = time().day(8).hour(6);
+const remaining = allocated.subtract(spent);
+remaining.toString(); // "5 days, 18 hours"
 ```
 
 ---
