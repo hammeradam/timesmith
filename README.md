@@ -43,12 +43,15 @@ const duration = time()
   .minute(30)
   .build(); // 94200 seconds
 
+// Initialize with options
+const duration2 = time({ h: 2, m: 30 }).build(); // 9000 seconds
+
 // Alternative syntax using 'add' prefix
-const duration2 = time()
+const duration3 = time()
   .addDays(1)
   .addHours(2)
   .addMinutes(30)
-  .build(); // Same result
+  .build(); // Same as duration
 ```
 
 ## Usage Examples
@@ -58,8 +61,11 @@ const duration2 = time()
 ```typescript
 import { time } from 'timesmith';
 
+// Initialize with time units
+const duration1 = time({ d: 1, h: 2, m: 30 }).build(); // 94200 seconds
+
 // Chain time units
-const duration = time()
+const duration2 = time()
   .week(1)
   .day(2)
   .hour(3)
@@ -67,18 +73,19 @@ const duration = time()
   .second(30)
   .build(); // Returns in seconds by default
 
+// Combine initialization and chaining
+const duration3 = time({ h: 2 })
+  .minute(30)
+  .build(); // 9000 seconds
+
 // Convert to different units
 const milliseconds = time()
   .hour(1)
   .build({ unit: 'ms' }); // 3600000
 
-const minutes = time()
-  .hour(2)
-  .build({ unit: 'm' }); // 120
+const minutes = time({ h: 2 }).build({ unit: 'm' }); // 120
 
-const hours = time()
-  .day(1)
-  .build({ unit: 'h' }); // 24
+const hours = time({ d: 1 }).build({ unit: 'h' }); // 24
 ```
 
 ### Unit Conversions
@@ -286,9 +293,31 @@ const hungarian = time()
 Creates a new time builder instance.
 
 **Options:**
+- `w?: number` - Initial time in weeks (default: 0)
+- `d?: number` - Initial time in days (default: 0)
+- `h?: number` - Initial time in hours (default: 0)
+- `m?: number` - Initial time in minutes (default: 0)
+- `s?: number` - Initial time in seconds (default: 0)
 - `ms?: number` - Initial time in milliseconds (default: 0)
 
+All options can be combined to create complex initial durations.
+
 **Returns:** `TimeBuilder`
+
+**Examples:**
+```typescript
+// Initialize with a single unit
+time({ h: 2 }).build(); // 7200 seconds
+
+// Combine multiple units
+time({ h: 1, m: 30, s: 45 }).build(); // 5445 seconds
+
+// Chain after initialization
+time({ d: 1 }).hour(6).build(); // 108000 seconds (1 day + 6 hours)
+
+// Use with all time methods
+time({ h: 2 }).add(time({ m: 30 })).toString(); // "2 hours, 30 minutes"
+```
 
 ---
 
@@ -627,27 +656,35 @@ All methods validate inputs at runtime:
 
 ### API Rate Limiting
 ```typescript
-const rateLimit = time().hour(1).toMilliseconds(); // 3600000ms
+// Using initialization
+const rateLimit = time({ h: 1 }).toMilliseconds(); // 3600000ms
 setTimeout(resetLimit, rateLimit);
+
+// Using chaining
+const rateLimit2 = time().hour(1).toMilliseconds(); // 3600000ms
 ```
 
 ### Cache TTL
 ```typescript
-const ttl = time().day(1).hour(12).toSeconds(); // 129600s
+const ttl = time({ d: 1, h: 12 }).toSeconds(); // 129600s
 cache.set('key', value, ttl);
 ```
 
 ### Scheduling & Cron
 ```typescript
-const interval = time().minute(15).toMilliseconds(); // 900000ms
+const interval = time({ m: 15 }).toMilliseconds(); // 900000ms
 setInterval(checkUpdates, interval);
 ```
 
 ### Duration Calculations
 ```typescript
+// From string
 const deadline = time()
   .fromString('2weeks 3days')
   .build({ unit: 'd' }); // 17 days
+
+// From initialization
+const deadline2 = time({ w: 2, d: 3 }).build({ unit: 'd' }); // 17 days
 ```
 
 ### ISO 8601 Integration
@@ -665,10 +702,10 @@ const iso = time()
 
 ### Duration Arithmetic
 ```typescript
-// Calculate total project time
-const development = time().day(5).hour(3);
-const testing = time().day(2).hour(4);
-const deployment = time().hour(8);
+// Calculate total project time (using initialization)
+const development = time({ d: 5, h: 3 });
+const testing = time({ d: 2, h: 4 });
+const deployment = time({ h: 8 });
 
 const totalTime = development
   .add(testing)
@@ -676,17 +713,17 @@ const totalTime = development
   .toString(); // "7 days, 15 hours"
 
 // Calculate time remaining
-const allocated = time().week(2);
-const spent = time().day(8).hour(6);
+const allocated = time({ w: 2 });
+const spent = time({ d: 8, h: 6 });
 const remaining = allocated.subtract(spent);
 remaining.toString(); // "5 days, 18 hours"
 ```
 
 ### Duration Comparison & Validation
 ```typescript
-// Validate timeouts
-const requestTimeout = time().second(30);
-const maxTimeout = time().minute(1);
+// Validate timeouts (using initialization)
+const requestTimeout = time({ s: 30 });
+const maxTimeout = time({ m: 1 });
 
 if (requestTimeout.isLessThanOrEqual(maxTimeout)) {
   // Safe to proceed
@@ -694,24 +731,24 @@ if (requestTimeout.isLessThanOrEqual(maxTimeout)) {
 }
 
 // SLA monitoring
-const responseTime = time().millisecond(250);
-const slaLimit = time().millisecond(500);
+const responseTime = time({ ms: 250 });
+const slaLimit = time({ ms: 500 });
 
 if (responseTime.isLessThan(slaLimit)) {
   console.log('✓ Within SLA');
 }
 
 // Progress tracking
-const elapsed = time().minute(45);
-const estimated = time().hour(1);
+const elapsed = time({ m: 45 });
+const estimated = time({ h: 1 });
 
 const progress = (elapsed.toMilliseconds() / estimated.toMilliseconds()) * 100;
 console.log(`Progress: ${progress}%`);
 
 // Time window validation
-const maintenanceWindow = time().hour(2);
-const minWindow = time().hour(1);
-const maxWindow = time().hour(4);
+const maintenanceWindow = time({ h: 2 });
+const minWindow = time({ h: 1 });
+const maxWindow = time({ h: 4 });
 
 if (maintenanceWindow.isBetween(minWindow, maxWindow)) {
   console.log('Maintenance window is acceptable');

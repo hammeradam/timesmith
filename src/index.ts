@@ -5,6 +5,31 @@ export type TimeUnit = 'w' | 'd' | 'h' | 'm' | 's' | 'ms';
  */
 export interface TimeOptions {
   /**
+   * The initial time in weeks
+   * @default 0
+   */
+  w?: number;
+  /**
+   * The initial time in days
+   * @default 0
+   */
+  d?: number;
+  /**
+   * The initial time in hours
+   * @default 0
+   */
+  h?: number;
+  /**
+   * The initial time in minutes
+   * @default 0
+   */
+  m?: number;
+  /**
+   * The initial time in seconds
+   * @default 0
+   */
+  s?: number;
+  /**
    * The initial time in milliseconds
    * @default 0
    */
@@ -614,8 +639,12 @@ function isBetween(
 /**
  * Creates a time builder for converting between different time units
  * @param options - Configuration options for the time builder
+ * @param options.w - Initial time in weeks (default: 0)
+ * @param options.d - Initial time in days (default: 0)
+ * @param options.h - Initial time in hours (default: 0)
+ * @param options.m - Initial time in minutes (default: 0)
+ * @param options.s - Initial time in seconds (default: 0)
  * @param options.ms - Initial time in milliseconds (default: 0)
- * @param options.unit - Target unit for conversion (default: 's')
  * @returns A builder object for chaining time conversions
  * @throws {Error} When input values are negative or not finite
  *
@@ -625,10 +654,10 @@ function isBetween(
  * // Returns: 94200 (seconds)
  * ```
  *
- * @example Convert to milliseconds
+ * @example Initialize with different units
  * ```ts
- * time({ unit: 'ms' }).hour(1).build()
- * // Returns: 3600000 (milliseconds)
+ * time({ h: 2, m: 30 }).build()
+ * // Returns: 9000 (seconds)
  * ```
  *
  * @example Get human readable string
@@ -638,39 +667,48 @@ function isBetween(
  * ```
  */
 export function time(options?: TimeOptions): TimeBuilder {
-  const { ms = 0 } = options || {};
+  const { w = 0, d = 0, h = 0, m = 0, s = 0, ms = 0 } = options || {};
+
+  // Convert all units to milliseconds
+  const totalMs
+    = w * TIME_CONSTANTS.WEEK_IN_MS
+      + d * TIME_CONSTANTS.DAY_IN_MS
+      + h * TIME_CONSTANTS.HOUR_IN_MS
+      + m * TIME_CONSTANTS.MINUTE_IN_MS
+      + s * TIME_CONSTANTS.SECOND_IN_MS
+      + ms;
 
   return {
-    week: (weeks = 1) => addWeeks(ms, weeks),
-    addWeeks: (weeks = 1) => addWeeks(ms, weeks),
-    day: (days = 1) => addDays(ms, days),
-    addDays: (days = 1) => addDays(ms, days),
-    hour: (hours = 1) => addHours(ms, hours),
-    addHours: (hours = 1) => addHours(ms, hours),
-    minute: (minutes = 1) => addMinutes(ms, minutes),
-    addMinutes: (minutes = 1) => addMinutes(ms, minutes),
-    second: (seconds = 1) => addSeconds(ms, seconds),
-    addSeconds: (seconds = 1) => addSeconds(ms, seconds),
-    millisecond: (milliseconds = 1) => addMilliseconds(ms, milliseconds),
-    addMilliseconds: (milliseconds = 1) => addMilliseconds(ms, milliseconds),
-    toString: (toStringOptions?: ToStringOptions) => toString(ms, toStringOptions),
+    week: (weeks = 1) => addWeeks(totalMs, weeks),
+    addWeeks: (weeks = 1) => addWeeks(totalMs, weeks),
+    day: (days = 1) => addDays(totalMs, days),
+    addDays: (days = 1) => addDays(totalMs, days),
+    hour: (hours = 1) => addHours(totalMs, hours),
+    addHours: (hours = 1) => addHours(totalMs, hours),
+    minute: (minutes = 1) => addMinutes(totalMs, minutes),
+    addMinutes: (minutes = 1) => addMinutes(totalMs, minutes),
+    second: (seconds = 1) => addSeconds(totalMs, seconds),
+    addSeconds: (seconds = 1) => addSeconds(totalMs, seconds),
+    millisecond: (milliseconds = 1) => addMilliseconds(totalMs, milliseconds),
+    addMilliseconds: (milliseconds = 1) => addMilliseconds(totalMs, milliseconds),
+    toString: (toStringOptions?: ToStringOptions) => toString(totalMs, toStringOptions),
     fromString: (timeString: string) => fromString(timeString),
-    toISO8601String: (toISO8601StringOptions?: ToISO8601StringOptions) => toISO8601String(ms, toISO8601StringOptions),
+    toISO8601String: (toISO8601StringOptions?: ToISO8601StringOptions) => toISO8601String(totalMs, toISO8601StringOptions),
     fromISO8601String: (timeString: string) => fromISO8601String(timeString),
-    toWeeks: () => ms / TIME_CONSTANTS.WEEK_IN_MS,
-    toDays: () => ms / TIME_CONSTANTS.DAY_IN_MS,
-    toHours: () => ms / TIME_CONSTANTS.HOUR_IN_MS,
-    toMinutes: () => ms / TIME_CONSTANTS.MINUTE_IN_MS,
-    toSeconds: () => ms / TIME_CONSTANTS.SECOND_IN_MS,
-    toMilliseconds: () => ms,
-    build: (options: BuildOptions = {}) => build(ms, options),
-    add: (duration: BaseTimeBuilder) => add(ms, duration),
-    subtract: (duration: BaseTimeBuilder) => subtract(ms, duration),
-    isLessThan: (duration: BaseTimeBuilder) => isLessThan(ms, duration),
-    isLessThanOrEqual: (duration: BaseTimeBuilder) => isLessThanOrEqual(ms, duration),
-    isGreaterThan: (duration: BaseTimeBuilder) => isGreaterThan(ms, duration),
-    isGreaterThanOrEqual: (duration: BaseTimeBuilder) => isGreaterThanOrEqual(ms, duration),
-    equals: (duration: BaseTimeBuilder) => equals(ms, duration),
-    isBetween: (min: BaseTimeBuilder, max: BaseTimeBuilder) => isBetween(ms, min, max),
+    toWeeks: () => totalMs / TIME_CONSTANTS.WEEK_IN_MS,
+    toDays: () => totalMs / TIME_CONSTANTS.DAY_IN_MS,
+    toHours: () => totalMs / TIME_CONSTANTS.HOUR_IN_MS,
+    toMinutes: () => totalMs / TIME_CONSTANTS.MINUTE_IN_MS,
+    toSeconds: () => totalMs / TIME_CONSTANTS.SECOND_IN_MS,
+    toMilliseconds: () => totalMs,
+    build: (options: BuildOptions = {}) => build(totalMs, options),
+    add: (duration: BaseTimeBuilder) => add(totalMs, duration),
+    subtract: (duration: BaseTimeBuilder) => subtract(totalMs, duration),
+    isLessThan: (duration: BaseTimeBuilder) => isLessThan(totalMs, duration),
+    isLessThanOrEqual: (duration: BaseTimeBuilder) => isLessThanOrEqual(totalMs, duration),
+    isGreaterThan: (duration: BaseTimeBuilder) => isGreaterThan(totalMs, duration),
+    isGreaterThanOrEqual: (duration: BaseTimeBuilder) => isGreaterThanOrEqual(totalMs, duration),
+    equals: (duration: BaseTimeBuilder) => equals(totalMs, duration),
+    isBetween: (min: BaseTimeBuilder, max: BaseTimeBuilder) => isBetween(totalMs, min, max),
   };
 }

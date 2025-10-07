@@ -3,6 +3,57 @@ import { describe, expect, it } from 'vitest';
 import { time } from '../index';
 
 describe('timesmith', () => {
+  describe('initialization with options', () => {
+    it('should initialize with milliseconds', () => {
+      expect(time({ ms: 5000 }).build()).toBe(5);
+    });
+
+    it('should initialize with seconds', () => {
+      expect(time({ s: 60 }).build()).toBe(60);
+    });
+
+    it('should initialize with minutes', () => {
+      expect(time({ m: 5 }).build()).toBe(300);
+    });
+
+    it('should initialize with hours', () => {
+      expect(time({ h: 2 }).build()).toBe(7200);
+    });
+
+    it('should initialize with days', () => {
+      expect(time({ d: 1 }).build()).toBe(86400);
+    });
+
+    it('should initialize with weeks', () => {
+      expect(time({ w: 1 }).build()).toBe(604800);
+    });
+
+    it('should combine multiple units in initialization', () => {
+      expect(time({ h: 1, m: 30, s: 45 }).build()).toBe(5445);
+    });
+
+    it('should chain methods after initialization', () => {
+      expect(time({ h: 1 }).minute(30).build()).toBe(5400);
+    });
+
+    it('should work with all conversion methods', () => {
+      expect(time({ h: 2 }).toMinutes()).toBe(120);
+      expect(time({ d: 1 }).toHours()).toBe(24);
+      expect(time({ w: 1 }).toDays()).toBe(7);
+    });
+
+    it('should work with arithmetic operations', () => {
+      const base = time({ h: 2 });
+      const addition = time({ m: 30 });
+      expect(base.add(addition).toMinutes()).toBe(150);
+    });
+
+    it('should work with comparison operations', () => {
+      expect(time({ h: 1 }).isLessThan(time({ h: 2 }))).toBe(true);
+      expect(time({ m: 60 }).equals(time({ h: 1 }))).toBe(true);
+    });
+  });
+
   describe('basic conversions', () => {
     it('should convert hours to milliseconds', () => {
       expect(time().hour(1).build({ unit: 'ms' })).toBe(3600000);
