@@ -252,6 +252,15 @@ export interface TimeBuilder {
    */
   toMilliseconds: () => number;
   /**
+   * Creates a copy of the current duration
+   * @returns A new time object with the same duration
+   * @example
+   * const original = time({ h: 1, m: 30 });
+   * const copy = original.clone();
+   * // copy is independent of original
+   */
+  clone: () => TimeBuilder;
+  /**
    * Adds another duration to the current duration
    * @param duration - The duration to add (any TimeBuilder instance)
    * @returns A new time object with the combined duration
@@ -582,6 +591,10 @@ function build(currentMs: number, options: BuildOptions = {}) {
   return convertToUnit(currentMs, unit);
 }
 
+function clone(currentMs: number) {
+  return time({ ms: currentMs });
+}
+
 function add(currentMs: number, duration: TimeBuilder) {
   const durationMs = duration.toMilliseconds();
   return time({ ms: currentMs + durationMs });
@@ -689,6 +702,7 @@ export function time(options?: TimeOptions): TimeBuilder {
     toSeconds: () => totalMs / TIME_CONSTANTS.SECOND_IN_MS,
     toMilliseconds: () => totalMs,
     build: (options: BuildOptions = {}) => build(totalMs, options),
+    clone: () => clone(totalMs),
     add: (duration: TimeBuilder) => add(totalMs, duration),
     subtract: (duration: TimeBuilder) => subtract(totalMs, duration),
     isLessThan: (duration: TimeBuilder) => isLessThan(totalMs, duration),

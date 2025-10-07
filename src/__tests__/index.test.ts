@@ -54,6 +54,92 @@ describe('timesmith', () => {
     });
   });
 
+  describe('cloning', () => {
+    it('should create an independent copy of a duration', () => {
+      const original = time({ h: 2, m: 30 });
+      const cloned = original.clone();
+
+      expect(cloned.build()).toBe(original.build());
+      expect(cloned.toMilliseconds()).toBe(original.toMilliseconds());
+    });
+
+    it('should allow modifications to clone without affecting original', () => {
+      const original = time({ h: 1 });
+      const cloned = original.clone().hour(1); // Add another hour
+
+      expect(original.build()).toBe(3600); // 1 hour
+      expect(cloned.build()).toBe(7200); // 2 hours
+    });
+
+    it('should clone durations with all time units', () => {
+      const original = time({ w: 1, d: 2, h: 3, m: 4, s: 5, ms: 6 });
+      const cloned = original.clone();
+
+      expect(cloned.toMilliseconds()).toBe(original.toMilliseconds());
+      expect(cloned.toString()).toBe(original.toString());
+    });
+
+    it('should work with cloned durations in arithmetic operations', () => {
+      const duration1 = time({ h: 1 });
+      const duration2 = duration1.clone();
+
+      const sum = duration1.add(duration2);
+      expect(sum.toHours()).toBe(2);
+    });
+
+    it('should work with cloned durations in comparison operations', () => {
+      const original = time({ m: 30 });
+      const cloned = original.clone();
+
+      expect(original.equals(cloned)).toBe(true);
+      expect(original.isLessThan(cloned)).toBe(false);
+      expect(original.isGreaterThan(cloned)).toBe(false);
+    });
+
+    it('should clone and continue chaining', () => {
+      const base = time({ h: 1 });
+      const modified = base.clone().minute(30).second(45);
+
+      expect(base.build()).toBe(3600); // 1 hour
+      expect(modified.build()).toBe(5445); // 1h 30m 45s
+    });
+
+    it('should clone from parsed string', () => {
+      const original = time().fromString('1d 2h 30m');
+      const cloned = original.clone();
+
+      expect(cloned.build()).toBe(original.build());
+      expect(cloned.toString()).toBe(original.toString());
+    });
+
+    it('should clone from ISO8601 string', () => {
+      const original = time().fromISO8601String('P1DT2H30M');
+      const cloned = original.clone();
+
+      expect(cloned.build()).toBe(original.build());
+      expect(cloned.toISO8601String()).toBe(original.toISO8601String());
+    });
+
+    it('should clone zero duration', () => {
+      const original = time();
+      const cloned = original.clone();
+
+      expect(cloned.build()).toBe(0);
+      expect(cloned.toMilliseconds()).toBe(0);
+    });
+
+    it('should support multiple clones', () => {
+      const original = time({ h: 1 });
+      const clone1 = original.clone();
+      const clone2 = original.clone();
+      const clone3 = clone1.clone();
+
+      expect(clone1.equals(original)).toBe(true);
+      expect(clone2.equals(original)).toBe(true);
+      expect(clone3.equals(original)).toBe(true);
+    });
+  });
+
   describe('basic conversions', () => {
     it('should convert hours to milliseconds', () => {
       expect(time().hour(1).build({ unit: 'ms' })).toBe(3600000);

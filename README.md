@@ -164,6 +164,42 @@ if (remaining.isLessThan(time().minute(5))) {
 time().fromString('1h 30m').isGreaterThan(time().fromISO8601String('PT1H')); // true
 ```
 
+### Cloning Durations
+
+```typescript
+// Create independent copies of durations
+const original = time({ h: 2, m: 30 });
+const copy = original.clone();
+
+// Modifications to copy don't affect original
+const modified = copy.hour(1); // Add another hour
+console.log(original.build()); // 9000 (2h 30m)
+console.log(modified.build()); // 12600 (3h 30m)
+
+// Use clones for safe operations
+const baseTimeout = time({ s: 30 });
+const shortTimeout = baseTimeout.clone().subtract(time({ s: 10 }));
+const longTimeout = baseTimeout.clone().add(time({ s: 10 }));
+
+console.log(baseTimeout.build()); // 30 (unchanged)
+console.log(shortTimeout.build()); // 20
+console.log(longTimeout.build()); // 40
+
+// Clone before modification to preserve original
+function applyTimeMultiplier(duration: TimeBuilder, multiplier: number) {
+  let result = duration.clone();
+  for (let i = 1; i < multiplier; i++) {
+    result = result.add(duration);
+  }
+  return result;
+}
+
+const oneHour = time({ h: 1 });
+const threeHours = applyTimeMultiplier(oneHour, 3);
+console.log(oneHour.build()); // 3600 (still 1 hour)
+console.log(threeHours.build()); // 10800 (3 hours)
+```
+
 ### String Formatting
 
 ```typescript
@@ -353,6 +389,32 @@ Direct conversion to specific units without building.
 - `toMinutes(): number` - Convert to minutes
 - `toSeconds(): number` - Convert to seconds
 - `toMilliseconds(): number` - Convert to milliseconds
+
+---
+
+### Utility Methods
+
+#### `clone(): TimeBuilder`
+
+Creates an independent copy of the current duration.
+
+**Returns:** `TimeBuilder` - A new time builder with the same duration
+
+**Example:**
+```typescript
+const original = time({ h: 2, m: 30 });
+const copy = original.clone();
+
+// Modifications to copy don't affect original
+const modified = copy.hour(1);
+console.log(original.toHours()); // 2.5
+console.log(modified.toHours()); // 3.5
+```
+
+**Use cases:**
+- Preserving original values when performing calculations
+- Creating variants of a base duration
+- Safe function parameters that need modification
 
 ---
 
@@ -702,6 +764,33 @@ const allocated = time({ w: 2 });
 const spent = time({ d: 8, h: 6 });
 const remaining = allocated.subtract(spent);
 remaining.toString(); // "5 days, 18 hours"
+```
+
+### Cloning for Safe Calculations
+```typescript
+// Preserve base durations while creating variants
+const baseDelay = time({ s: 5 });
+const shortDelay = baseDelay.clone().subtract(time({ s: 2 }));
+const longDelay = baseDelay.clone().add(time({ s: 5 }));
+
+retry(task, { delay: shortDelay.toMilliseconds() }); // 3000ms
+retry(task, { delay: baseDelay.toMilliseconds() }); // 5000ms (unchanged)
+retry(task, { delay: longDelay.toMilliseconds() }); // 10000ms
+
+// Safe function parameters
+function calculateSLA(baseDuration: TimeBuilder, multiplier: number) {
+  // Clone to avoid mutating the input
+  let sla = baseDuration.clone();
+  for (let i = 1; i < multiplier; i++) {
+    sla = sla.add(baseDuration);
+  }
+  return sla;
+}
+
+const responseTime = time({ ms: 100 });
+const slaTarget = calculateSLA(responseTime, 5); // 500ms
+console.log(responseTime.toMilliseconds()); // 100 (original unchanged)
+console.log(slaTarget.toMilliseconds()); // 500
 ```
 
 ### Duration Comparison & Validation
