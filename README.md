@@ -1,4 +1,4 @@
-# ⏱️ timesmith
+# timesmith
 
 [![npm version](https://badge.fury.io/js/timesmith.svg)](https://badge.fury.io/js/timesmith)
 [![CI](https://github.com/hammeradam/timesmith/workflows/CI/badge.svg)](https://github.com/hammeradam/timesmith/actions)
@@ -8,14 +8,14 @@
 
 A fluent, type-safe API for time duration calculations in TypeScript with full ISO 8601 support.
 
-## ✨ Features
+## Features
 
-- 🔗 **Fluent API** - Chain time operations naturally
-- 📝 **ISO 8601 Support** - Parse and format ISO 8601 duration strings
-- 🌍 **i18n Ready** - Full localization support with custom translations
-- 🎯 **Type-Safe** - Complete TypeScript support with strict typing
-- ⚡ **Lightweight** - Zero dependencies
-- ✅ **Well Tested** - 97%+ test coverage
+- **Fluent API** - Chain time operations naturally
+- **ISO 8601 Support** - Parse and format ISO 8601 duration strings
+- **i18n Ready** - Full localization support with custom translations
+- **Type-Safe** - Complete TypeScript support with strict typing
+- **Lightweight** - Zero dependencies
+- **Well Tested** - 97%+ test coverage
 
 ## Installation
 
@@ -31,7 +31,7 @@ yarn add timesmith
 bun add timesmith
 ```
 
-## 🚀 Quick Start
+## Quick Start
 
 ```typescript
 import { time } from 'timesmith';
@@ -51,7 +51,7 @@ const duration2 = time()
   .build(); // Same result
 ```
 
-## 📚 Usage Examples
+## Usage Examples
 
 ### Building Durations
 
@@ -215,7 +215,7 @@ const hungarian = time()
   .toString({ translations: hungarianTranslations }); // "1 óra, 30 perc"
 ```
 
-## 📖 API Reference
+## API Reference
 
 ### `time(options?)`
 
@@ -371,7 +371,7 @@ time().day(1).build({ unit: 'h' }); // 24 (hours)
 
 ---
 
-## 🛡️ Type Safety & Validation
+## Type Safety & Validation
 
 ### Progressive API
 
@@ -416,7 +416,7 @@ All methods validate inputs at runtime:
 
 ---
 
-## 🎯 Use Cases
+## Use Cases
 
 ### API Rate Limiting
 ```typescript
@@ -458,12 +458,12 @@ const iso = time()
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
 ---
 
-## 📄 License
+## License
 
 MIT © [Adam Hammer](https://github.com/hammeradam)
