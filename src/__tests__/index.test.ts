@@ -373,6 +373,98 @@ describe('timesmith', () => {
       });
     });
 
+    describe('multiply', () => {
+      it('should multiply duration by a scalar', () => {
+        expect(time({ h: 2 }).multiply(3).toHours()).toBe(6);
+      });
+
+      it('should multiply by fractional values', () => {
+        expect(time({ h: 4 }).multiply(0.5).toHours()).toBe(2);
+        expect(time({ m: 30 }).multiply(2.5).toMinutes()).toBe(75);
+      });
+
+      it('should multiply by zero to get zero', () => {
+        expect(time({ h: 5 }).multiply(0).build()).toBe(0);
+      });
+
+      it('should multiply by one to get same duration', () => {
+        expect(time({ h: 3 }).multiply(1).toHours()).toBe(3);
+      });
+
+      it('should work with complex durations', () => {
+        expect(time({ h: 1, m: 30 }).multiply(2).toMinutes()).toBe(180);
+      });
+
+      it('should be chainable', () => {
+        const result = time({ h: 2 }).multiply(3).add(time({ h: 1 }));
+        expect(result.toHours()).toBe(7);
+      });
+
+      it('should work with toString', () => {
+        expect(time({ h: 2 }).multiply(3).toString()).toBe('6 hours');
+      });
+
+      it('should throw on negative multiplier', () => {
+        expect(() => time({ h: 2 }).multiply(-1)).toThrow('Invalid multiplier value: -1. Must be non-negative.');
+      });
+
+      it('should throw on infinite multiplier', () => {
+        expect(() => time({ h: 2 }).multiply(Number.POSITIVE_INFINITY)).toThrow('Invalid multiplier value: Infinity. Must be finite.');
+      });
+
+      it('should throw on NaN multiplier', () => {
+        expect(() => time({ h: 2 }).multiply(Number.NaN)).toThrow('Invalid multiplier value: NaN. Must be finite.');
+      });
+    });
+
+    describe('divide', () => {
+      it('should divide duration by a scalar', () => {
+        expect(time({ h: 6 }).divide(3).toHours()).toBe(2);
+      });
+
+      it('should divide by fractional values', () => {
+        expect(time({ h: 4 }).divide(0.5).toHours()).toBe(8);
+        expect(time({ m: 30 }).divide(2.5).toMinutes()).toBe(12);
+      });
+
+      it('should divide by one to get same duration', () => {
+        expect(time({ h: 5 }).divide(1).toHours()).toBe(5);
+      });
+
+      it('should work with complex durations', () => {
+        expect(time({ h: 3, m: 30 }).divide(2).toMinutes()).toBe(105);
+      });
+
+      it('should handle non-integer results', () => {
+        expect(time({ h: 5 }).divide(2).toHours()).toBe(2.5);
+      });
+
+      it('should be chainable', () => {
+        const result = time({ h: 8 }).divide(2).subtract(time({ h: 1 }));
+        expect(result.toHours()).toBe(3);
+      });
+
+      it('should work with toString', () => {
+        expect(time({ h: 6 }).divide(3).toString()).toBe('2 hours');
+      });
+
+      it('should throw on division by zero', () => {
+        expect(() => time({ h: 5 }).divide(0)).toThrow('Invalid divisor value: 0. Cannot divide by zero.');
+      });
+
+      it('should throw on negative divisor', () => {
+        expect(() => time({ h: 6 }).divide(-2)).toThrow('Invalid divisor value: -2. Must be positive.');
+      });
+
+      it('should throw on infinite divisor', () => {
+        expect(() => time({ h: 2 }).divide(Number.POSITIVE_INFINITY)).toThrow('Invalid divisor value: Infinity. Must be finite.');
+      });
+
+      it('should throw on NaN divisor', () => {
+        expect(() => time({ h: 2 }).divide(Number.NaN)).toThrow('Invalid divisor value: NaN. Must be finite.');
+      });
+    });
+
     describe('complex arithmetic', () => {
       it('should handle add and subtract together', () => {
         const result = time()

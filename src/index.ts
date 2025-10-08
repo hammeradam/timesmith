@@ -275,6 +275,20 @@ export interface TimeBuilder {
    */
   subtract: (duration: TimeBuilder) => TimeBuilder;
   /**
+   * Multiplies the current duration by a scalar value
+   * @param multiplier - The number to multiply by (must be non-negative)
+   * @returns A new time object with the multiplied duration
+   * @example time().hour(2).multiply(3).toString() // "6 hours"
+   */
+  multiply: (multiplier: number) => TimeBuilder;
+  /**
+   * Divides the current duration by a scalar value
+   * @param divisor - The number to divide by (must be positive)
+   * @returns A new time object with the divided duration
+   * @example time().hour(6).divide(3).toString() // "2 hours"
+   */
+  divide: (divisor: number) => TimeBuilder;
+  /**
    * Checks if the current duration is less than another duration
    * @param duration - The duration to compare against
    * @returns True if current duration is less than the provided duration
@@ -663,6 +677,24 @@ function subtract(currentMs: number, duration: TimeBuilder) {
   return time({ ms: Math.max(0, currentMs - durationMs) });
 }
 
+function multiply(currentMs: number, multiplier: number) {
+  validateInput(multiplier, 'multiplier');
+  return time({ ms: currentMs * multiplier });
+}
+
+function divide(currentMs: number, divisor: number) {
+  if (divisor === 0) {
+    throw new Error('Invalid divisor value: 0. Cannot divide by zero.');
+  }
+  if (divisor < 0) {
+    throw new Error(`Invalid divisor value: ${divisor}. Must be positive.`);
+  }
+  if (!Number.isFinite(divisor)) {
+    throw new TypeError(`Invalid divisor value: ${divisor}. Must be finite.`);
+  }
+  return time({ ms: currentMs / divisor });
+}
+
 function isLessThan(currentMs: number, duration: TimeBuilder) {
   return currentMs < duration.toMilliseconds();
 }
@@ -825,6 +857,8 @@ export function time(options?: TimeOptions): TimeBuilder {
     clone: () => clone(totalMs),
     add: (duration: TimeBuilder) => add(totalMs, duration),
     subtract: (duration: TimeBuilder) => subtract(totalMs, duration),
+    multiply: (multiplier: number) => multiply(totalMs, multiplier),
+    divide: (divisor: number) => divide(totalMs, divisor),
     isLessThan: (duration: TimeBuilder) => isLessThan(totalMs, duration),
     isLessThanOrEqual: (duration: TimeBuilder) => isLessThanOrEqual(totalMs, duration),
     isGreaterThan: (duration: TimeBuilder) => isGreaterThan(totalMs, duration),

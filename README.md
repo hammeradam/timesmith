@@ -208,6 +208,20 @@ duration1.add(duration2).toString(); // "3 hours, 15 minutes"
 const small = time().minute(30);
 const large = time().hour(2);
 small.subtract(large).build(); // 0
+
+// Multiply duration by a scalar
+const shift = time({ h: 8 });
+const week = shift.multiply(5).toString(); // "1 day, 16 hours" (40 hours)
+const double = time({ h: 2, m: 30 }).multiply(2).toHours(); // 5
+
+// Divide duration by a scalar
+const total = time({ h: 6 });
+const perPerson = total.divide(3).toHours(); // 2
+const half = time({ h: 3, m: 30 }).divide(2).toMinutes(); // 105
+
+// Combine multiplication and division
+const base = time({ m: 30 });
+const extended = base.multiply(3).divide(2).toMinutes(); // 45
 ```
 
 ### Comparison Operators
@@ -884,6 +898,60 @@ total.subtract(used).toString(); // "2 hours, 15 minutes"
 time().hour(1).subtract(time().hour(2)).build(); // 0
 ```
 
+#### `multiply(multiplier): TimeBuilder`
+
+Multiplies the current duration by a scalar value.
+
+**Parameters:**
+- `multiplier: number` - The number to multiply by (must be non-negative and finite)
+
+**Returns:** `TimeBuilder` - A new time builder with the multiplied duration
+
+**Example:**
+```typescript
+// Scale up durations
+time({ h: 2 }).multiply(3).toString(); // "6 hours"
+time({ h: 1, m: 30 }).multiply(2).toMinutes(); // 180
+
+// Use fractional values
+time({ h: 4 }).multiply(0.5).toHours(); // 2
+time({ m: 20 }).multiply(1.5).toMinutes(); // 30
+
+// Chainable
+time({ h: 2 }).multiply(3).add(time({ h: 1 })).toHours(); // 7
+```
+
+**Throws:**
+- `Error` when multiplier is negative
+- `TypeError` when multiplier is not finite (Infinity or NaN)
+
+#### `divide(divisor): TimeBuilder`
+
+Divides the current duration by a scalar value.
+
+**Parameters:**
+- `divisor: number` - The number to divide by (must be positive and finite)
+
+**Returns:** `TimeBuilder` - A new time builder with the divided duration
+
+**Example:**
+```typescript
+// Split durations
+time({ h: 6 }).divide(3).toString(); // "2 hours"
+time({ h: 3, m: 30 }).divide(2).toMinutes(); // 105
+
+// Use fractional values
+time({ h: 4 }).divide(0.5).toHours(); // 8
+time({ m: 30 }).divide(2.5).toMinutes(); // 12
+
+// Chainable
+time({ h: 8 }).divide(2).subtract(time({ h: 1 })).toHours(); // 3
+```
+
+**Throws:**
+- `Error` when divisor is zero or negative
+- `TypeError` when divisor is not finite (Infinity or NaN)
+
 ---
 
 ### Comparison Methods
@@ -1100,6 +1168,18 @@ const allocated = time({ w: 2 });
 const spent = time({ d: 8, h: 6 });
 const remaining = allocated.subtract(spent);
 remaining.toString(); // "5 days, 18 hours"
+
+// Multiply for scaling durations
+const dailyTask = time({ h: 2, m: 30 });
+const weeklyTime = dailyTask.multiply(5).toString(); // "12 hours, 30 minutes"
+
+// Divide for splitting durations
+const totalWork = time({ h: 40 });
+const perDay = totalWork.divide(5).toString(); // "8 hours"
+
+// Combine operations
+const baseShift = time({ h: 8 });
+const overtime = baseShift.multiply(1.5).toString(); // "12 hours" (150% of 8h)
 ```
 
 ### Cloning for Safe Calculations
