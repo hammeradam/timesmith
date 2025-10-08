@@ -353,6 +353,27 @@ export interface TimeBuilder {
    * @example time({ s: 3, ms: 500 }).getMilliseconds() // 500
    */
   getMilliseconds: () => number;
+  /**
+   * Rounds the duration to the nearest unit
+   * @param unit - The unit to round to ('w', 'd', 'h', 'm', 's', 'ms')
+   * @returns A new time builder with the rounded duration
+   * @example time({ h: 2, m: 37 }).round('h').toString() // "3 hours"
+   */
+  round: (unit: TimeUnit) => TimeBuilder;
+  /**
+   * Rounds the duration down (floor) to the specified unit
+   * @param unit - The unit to round down to ('w', 'd', 'h', 'm', 's', 'ms')
+   * @returns A new time builder with the floored duration
+   * @example time({ h: 2, m: 37 }).floor('h').toString() // "2 hours"
+   */
+  floor: (unit: TimeUnit) => TimeBuilder;
+  /**
+   * Rounds the duration up (ceil) to the specified unit
+   * @param unit - The unit to round up to ('w', 'd', 'h', 'm', 's', 'ms')
+   * @returns A new time builder with the ceiled duration
+   * @example time({ h: 2, m: 13 }).ceil('h').toString() // "3 hours"
+   */
+  ceil: (unit: TimeUnit) => TimeBuilder;
 }
 
 const TIME_CONSTANTS = {
@@ -700,6 +721,41 @@ function getMilliseconds(currentMs: number) {
   return Math.floor(currentMs % TIME_CONSTANTS.SECOND_IN_MS);
 }
 
+function round(currentMs: number, unit: TimeUnit) {
+  const unitMs = getUnitInMs(unit);
+  const rounded = Math.round(currentMs / unitMs) * unitMs;
+  return time({ ms: rounded });
+}
+
+function floor(currentMs: number, unit: TimeUnit) {
+  const unitMs = getUnitInMs(unit);
+  const floored = Math.floor(currentMs / unitMs) * unitMs;
+  return time({ ms: floored });
+}
+
+function ceil(currentMs: number, unit: TimeUnit) {
+  const unitMs = getUnitInMs(unit);
+  const ceiled = Math.ceil(currentMs / unitMs) * unitMs;
+  return time({ ms: ceiled });
+}
+
+function getUnitInMs(unit: TimeUnit): number {
+  switch (unit) {
+    case 'w':
+      return TIME_CONSTANTS.WEEK_IN_MS;
+    case 'd':
+      return TIME_CONSTANTS.DAY_IN_MS;
+    case 'h':
+      return TIME_CONSTANTS.HOUR_IN_MS;
+    case 'm':
+      return TIME_CONSTANTS.MINUTE_IN_MS;
+    case 's':
+      return TIME_CONSTANTS.SECOND_IN_MS;
+    case 'ms':
+      return 1;
+  }
+}
+
 /**
  * Creates a time builder for converting between different time units
  * @param options - Configuration options for the time builder
@@ -781,5 +837,8 @@ export function time(options?: TimeOptions): TimeBuilder {
     getMinutes: () => getMinutes(totalMs),
     getSeconds: () => getSeconds(totalMs),
     getMilliseconds: () => getMilliseconds(totalMs),
+    round: (unit: TimeUnit) => round(totalMs, unit),
+    floor: (unit: TimeUnit) => floor(totalMs, unit),
+    ceil: (unit: TimeUnit) => ceil(totalMs, unit),
   };
 }

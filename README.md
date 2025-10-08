@@ -128,6 +128,57 @@ time().fromString('2w 3d 5h').getWeeks(); // 2
 time().fromISO8601String('P1W2DT3H').getDays(); // 2
 ```
 
+### Rounding & Precision
+
+```typescript
+// Round to nearest unit
+time({ h: 2, m: 37 }).round('h').toString(); // "3 hours"
+time({ d: 1, h: 13 }).round('d').toString(); // "2 days"
+time({ m: 5, s: 31 }).round('m').toMinutes(); // 6
+
+// Floor (round down, remove smaller units)
+time({ h: 2, m: 59 }).floor('h').toString(); // "2 hours"
+time({ d: 1, h: 23 }).floor('d').toString(); // "1 day"
+time({ d: 13 }).floor('w').toString(); // "1 week"
+
+// Ceil (round up if any smaller units exist)
+time({ h: 2, m: 1 }).ceil('h').toString(); // "3 hours"
+time({ d: 1, h: 1 }).ceil('d').toString(); // "2 days"
+time({ d: 8 }).ceil('w').toString(); // "2 weeks"
+
+// Real-world use cases
+// 1. User-friendly display - hide small units
+const uptime = time({ h: 73, m: 45 });
+console.log(uptime.round('h').toString()); // "3 days, 2 hours"
+
+// 2. SLA deadlines - always round up
+const responseTime = time({ h: 25, m: 30 });
+const slaDeadline = responseTime.ceil('d').toDays(); // 2 days (safe estimate)
+
+// 3. Billing - round up to nearest hour
+const usage = time({ h: 2, m: 15 });
+const billableHours = usage.ceil('h').toHours(); // 3 hours
+
+// 4. Cache TTL - round down for safety
+const ttl = time({ h: 23, m: 55 });
+const safeTTL = ttl.floor('h').toSeconds(); // 82800s (23 hours exactly)
+
+// 5. Progress reporting
+const elapsed = time({ h: 4, m: 37, s: 12 });
+console.log(`Runtime: ${elapsed.round('m').toString()}`); // "4 hours, 37 minutes"
+
+// Works with all operations
+time({ h: 2, m: 45 })
+  .round('h') // Round to 3 hours
+  .add(time({ m: 30 })) // Add 30 minutes
+  .toString(); // "3 hours, 30 minutes"
+
+// Compare rounded values
+const actual = time({ h: 2, m: 45 });
+const target = time({ h: 3 });
+actual.round('h').equals(target); // true
+```
+
 ### Duration Arithmetic
 
 ```typescript
@@ -548,6 +599,136 @@ const duration = time({ w: 2, d: 3 });
 duration.getDays(); // 3 (component)
 duration.toDays(); // 17 (total: 2 weeks + 3 days = 17 days)
 ```
+
+---
+
+### Rounding & Precision Methods
+
+Control precision by rounding durations to specific time units. These methods help create user-friendly displays and simplify time calculations.
+
+#### `round(unit: TimeUnit): TimeBuilder`
+
+Rounds the duration to the nearest specified unit using standard rounding (0.5 rounds up).
+
+**Parameters:**
+- `unit: TimeUnit` - The unit to round to ('w', 'd', 'h', 'm', 's', 'ms')
+
+**Returns:** `TimeBuilder` - A new time builder with the rounded duration
+
+**Example:**
+```typescript
+// Round to nearest hour
+time({ h: 2, m: 37 }).round('h').toString(); // "3 hours" (rounds up)
+time({ h: 2, m: 29 }).round('h').toString(); // "2 hours" (rounds down)
+time({ h: 2, m: 30 }).round('h').toString(); // "3 hours" (0.5 rounds up)
+
+// Round to nearest day
+time({ d: 1, h: 13 }).round('d').toString(); // "2 days"
+time({ d: 1, h: 11 }).round('d').toString(); // "1 day"
+
+// Round to nearest week
+time({ d: 10 }).round('w').toString(); // "1 week"
+time({ d: 3 }).round('w').toString(); // "0 seconds" (less than 3.5 days)
+
+// Works with all units
+time({ m: 5, s: 31 }).round('m').toMinutes(); // 6
+time({ s: 10, ms: 501 }).round('s').toSeconds(); // 11
+```
+
+#### `floor(unit: TimeUnit): TimeBuilder`
+
+Rounds the duration down to the specified unit, removing all smaller units.
+
+**Parameters:**
+- `unit: TimeUnit` - The unit to floor to ('w', 'd', 'h', 'm', 's', 'ms')
+
+**Returns:** `TimeBuilder` - A new time builder with the floored duration
+
+**Example:**
+```typescript
+// Floor to hour (removes minutes, seconds, etc.)
+time({ h: 2, m: 59 }).floor('h').toString(); // "2 hours"
+time({ h: 2, m: 1 }).floor('h').toString(); // "2 hours"
+
+// Floor to day
+time({ d: 1, h: 23 }).floor('d').toString(); // "1 day"
+
+// Floor to week
+time({ d: 13 }).floor('w').toString(); // "1 week"
+time({ d: 6 }).floor('w').toString(); // "0 seconds"
+
+// Removes all smaller units
+time({ h: 2, m: 30, s: 45 }).floor('h').getMinutes(); // 0
+time({ h: 2, m: 30, s: 45 }).floor('h').getSeconds(); // 0
+```
+
+#### `ceil(unit: TimeUnit): TimeBuilder`
+
+Rounds the duration up to the specified unit if there are any smaller units present.
+
+**Parameters:**
+- `unit: TimeUnit` - The unit to ceil to ('w', 'd', 'h', 'm', 's', 'ms')
+
+**Returns:** `TimeBuilder` - A new time builder with the ceiled duration
+
+**Example:**
+```typescript
+// Ceil to hour (rounds up if any minutes/seconds)
+time({ h: 2, m: 1 }).ceil('h').toString(); // "3 hours"
+time({ h: 2, m: 59 }).ceil('h').toString(); // "3 hours"
+time({ h: 2, m: 0 }).ceil('h').toString(); // "2 hours" (exact, no rounding)
+
+// Ceil to day
+time({ d: 1, h: 1 }).ceil('d').toString(); // "2 days"
+time({ d: 1, h: 0 }).ceil('d').toString(); // "1 day" (exact)
+
+// Ceil to week
+time({ d: 8 }).ceil('w').toString(); // "2 weeks"
+time({ d: 1 }).ceil('w').toString(); // "1 week"
+
+// Useful for billing periods (always round up)
+time({ h: 2, m: 15 }).ceil('h').toHours(); // 3 (bill for 3 hours)
+```
+
+**Common Use Cases:**
+
+```typescript
+// 1. User-friendly displays
+const uptime = time({ h: 73, m: 45 });
+uptime.round('h').toString(); // "3 days, 2 hours" (cleaner than "3 days, 1 hour, 45 minutes")
+
+// 2. SLA deadlines (round up to be safe)
+const responseTime = time({ h: 25, m: 30 });
+responseTime.ceil('d').toDays(); // 2 (always allow full days)
+
+// 3. Billing periods (round up)
+const usageTime = time({ h: 2, m: 15 });
+usageTime.ceil('h').toHours(); // 3 (bill for 3 hours)
+
+// 4. Cache expiration (round down to be safe)
+const ttl = time({ h: 23, m: 55 });
+ttl.floor('h').toSeconds(); // 82800 (23 hours, cache expires slightly early)
+
+// 5. Progress reporting
+const elapsed = time({ h: 4, m: 37, s: 12 });
+console.log(`Elapsed: ${elapsed.round('m').toString()}`); // "4 hours, 37 minutes"
+
+// 6. Chaining with other operations
+const adjusted = time({ h: 5, m: 45 })
+  .round('h')
+  .add(time({ h: 1 }))
+  .toString(); // "7 hours"
+
+// 7. Comparison with rounded values
+const actual = time({ h: 2, m: 45 });
+const limit = time({ h: 3 });
+actual.round('h').equals(limit); // true
+```
+
+**When to use each:**
+- **`round()`**: General purpose, balanced rounding for displays and calculations
+- **`floor()`**: Conservative estimates, cache TTLs, when you want to under-promise
+- **`ceil()`**: SLA deadlines, billing periods, when you want to over-promise or guarantee minimums
 
 ---
 

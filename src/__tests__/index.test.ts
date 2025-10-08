@@ -1082,4 +1082,246 @@ describe('timesmith', () => {
       });
     });
   });
+
+  describe('rounding and precision', () => {
+    describe('round', () => {
+      it('should round to nearest hour', () => {
+        expect(time({ h: 2, m: 37 }).round('h').toHours()).toBe(3);
+        expect(time({ h: 2, m: 29 }).round('h').toHours()).toBe(2);
+        expect(time({ h: 2, m: 30 }).round('h').toHours()).toBe(3);
+      });
+
+      it('should round to nearest day', () => {
+        expect(time({ d: 1, h: 13 }).round('d').toDays()).toBe(2);
+        expect(time({ d: 1, h: 11 }).round('d').toDays()).toBe(1);
+        expect(time({ d: 1, h: 12 }).round('d').toDays()).toBe(2);
+      });
+
+      it('should round to nearest week', () => {
+        expect(time({ d: 10 }).round('w').toWeeks()).toBe(1);
+        expect(time({ d: 3 }).round('w').toWeeks()).toBe(0);
+        expect(time({ d: 4 }).round('w').toWeeks()).toBe(1);
+      });
+
+      it('should round to nearest minute', () => {
+        expect(time({ m: 5, s: 31 }).round('m').toMinutes()).toBe(6);
+        expect(time({ m: 5, s: 29 }).round('m').toMinutes()).toBe(5);
+        expect(time({ m: 5, s: 30 }).round('m').toMinutes()).toBe(6);
+      });
+
+      it('should round to nearest second', () => {
+        expect(time({ s: 10, ms: 501 }).round('s').toSeconds()).toBe(11);
+        expect(time({ s: 10, ms: 499 }).round('s').toSeconds()).toBe(10);
+        expect(time({ s: 10, ms: 500 }).round('s').toSeconds()).toBe(11);
+      });
+
+      it('should round to nearest millisecond', () => {
+        expect(time({ ms: 1234 }).round('ms').toMilliseconds()).toBe(1234);
+      });
+
+      it('should work with toString', () => {
+        expect(time({ h: 2, m: 37 }).round('h').toString()).toBe('3 hours');
+        expect(time({ d: 1, h: 13 }).round('d').toString()).toBe('2 days');
+      });
+
+      it('should be chainable', () => {
+        const result = time({ h: 2, m: 37 }).round('h').add(time({ h: 1 }));
+        expect(result.toHours()).toBe(4);
+      });
+
+      it('should work with complex durations', () => {
+        expect(time({ d: 5, h: 13, m: 45 }).round('d').toDays()).toBe(6);
+      });
+    });
+
+    describe('floor', () => {
+      it('should floor to hour', () => {
+        expect(time({ h: 2, m: 59 }).floor('h').toHours()).toBe(2);
+        expect(time({ h: 2, m: 1 }).floor('h').toHours()).toBe(2);
+        expect(time({ h: 2, m: 0 }).floor('h').toHours()).toBe(2);
+      });
+
+      it('should floor to day', () => {
+        expect(time({ d: 1, h: 23 }).floor('d').toDays()).toBe(1);
+        expect(time({ d: 1, h: 1 }).floor('d').toDays()).toBe(1);
+      });
+
+      it('should floor to week', () => {
+        expect(time({ d: 13 }).floor('w').toWeeks()).toBe(1);
+        expect(time({ d: 6 }).floor('w').toWeeks()).toBe(0);
+      });
+
+      it('should floor to minute', () => {
+        expect(time({ m: 5, s: 59 }).floor('m').toMinutes()).toBe(5);
+        expect(time({ m: 5, s: 1 }).floor('m').toMinutes()).toBe(5);
+      });
+
+      it('should floor to second', () => {
+        expect(time({ s: 10, ms: 999 }).floor('s').toSeconds()).toBe(10);
+        expect(time({ s: 10, ms: 1 }).floor('s').toSeconds()).toBe(10);
+      });
+
+      it('should work with toString', () => {
+        expect(time({ h: 2, m: 59 }).floor('h').toString()).toBe('2 hours');
+        expect(time({ d: 1, h: 23 }).floor('d').toString()).toBe('1 day');
+      });
+
+      it('should be chainable', () => {
+        const result = time({ h: 2, m: 45 }).floor('h').add(time({ m: 30 }));
+        expect(result.toMinutes()).toBe(150); // 2h + 30m = 150m
+      });
+
+      it('should remove all smaller units', () => {
+        const floored = time({ h: 2, m: 30, s: 45, ms: 500 }).floor('h');
+        expect(floored.getMinutes()).toBe(0);
+        expect(floored.getSeconds()).toBe(0);
+        expect(floored.getMilliseconds()).toBe(0);
+      });
+    });
+
+    describe('ceil', () => {
+      it('should ceil to hour', () => {
+        expect(time({ h: 2, m: 1 }).ceil('h').toHours()).toBe(3);
+        expect(time({ h: 2, m: 59 }).ceil('h').toHours()).toBe(3);
+        expect(time({ h: 2, m: 0 }).ceil('h').toHours()).toBe(2);
+      });
+
+      it('should ceil to day', () => {
+        expect(time({ d: 1, h: 1 }).ceil('d').toDays()).toBe(2);
+        expect(time({ d: 1, h: 23 }).ceil('d').toDays()).toBe(2);
+        expect(time({ d: 1, h: 0 }).ceil('d').toDays()).toBe(1);
+      });
+
+      it('should ceil to week', () => {
+        expect(time({ d: 8 }).ceil('w').toWeeks()).toBe(2);
+        expect(time({ d: 1 }).ceil('w').toWeeks()).toBe(1);
+        expect(time({ d: 7 }).ceil('w').toWeeks()).toBe(1);
+      });
+
+      it('should ceil to minute', () => {
+        expect(time({ m: 5, s: 1 }).ceil('m').toMinutes()).toBe(6);
+        expect(time({ m: 5, s: 59 }).ceil('m').toMinutes()).toBe(6);
+        expect(time({ m: 5, s: 0 }).ceil('m').toMinutes()).toBe(5);
+      });
+
+      it('should ceil to second', () => {
+        expect(time({ s: 10, ms: 1 }).ceil('s').toSeconds()).toBe(11);
+        expect(time({ s: 10, ms: 999 }).ceil('s').toSeconds()).toBe(11);
+        expect(time({ s: 10, ms: 0 }).ceil('s').toSeconds()).toBe(10);
+      });
+
+      it('should work with toString', () => {
+        expect(time({ h: 2, m: 1 }).ceil('h').toString()).toBe('3 hours');
+        expect(time({ d: 1, h: 1 }).ceil('d').toString()).toBe('2 days');
+      });
+
+      it('should be chainable', () => {
+        const result = time({ h: 2, m: 1 }).ceil('h').add(time({ m: 30 }));
+        expect(result.toMinutes()).toBe(210); // 3h + 30m = 210m
+      });
+
+      it('should remove all smaller units for non-exact values', () => {
+        const ceiled = time({ h: 2, m: 1, s: 45, ms: 500 }).ceil('h');
+        expect(ceiled.getHours()).toBe(3);
+        expect(ceiled.getMinutes()).toBe(0);
+        expect(ceiled.getSeconds()).toBe(0);
+        expect(ceiled.getMilliseconds()).toBe(0);
+      });
+    });
+
+    describe('edge cases', () => {
+      it('should handle zero duration', () => {
+        expect(time().round('h').build()).toBe(0);
+        expect(time().floor('h').build()).toBe(0);
+        expect(time().ceil('h').build()).toBe(0);
+      });
+
+      it('should handle exact unit values', () => {
+        expect(time({ h: 3 }).round('h').toHours()).toBe(3);
+        expect(time({ h: 3 }).floor('h').toHours()).toBe(3);
+        expect(time({ h: 3 }).ceil('h').toHours()).toBe(3);
+      });
+
+      it('should handle very small values', () => {
+        expect(time({ ms: 1 }).round('s').toSeconds()).toBe(0);
+        expect(time({ ms: 1 }).floor('s').toSeconds()).toBe(0);
+        expect(time({ ms: 1 }).ceil('s').toSeconds()).toBe(1);
+      });
+
+      it('should handle very large values', () => {
+        expect(time({ w: 100, d: 3 }).round('w').toWeeks()).toBe(100);
+        expect(time({ w: 100, d: 4 }).round('w').toWeeks()).toBe(101);
+      });
+    });
+
+    describe('use cases', () => {
+      it('should create user-friendly displays', () => {
+        const uptime = time({ h: 73, m: 45 });
+        expect(uptime.round('h').toString()).toBe('3 days, 2 hours');
+      });
+
+      it('should calculate SLA deadlines', () => {
+        const responseTime = time({ h: 25, m: 30 });
+        expect(responseTime.ceil('d').toDays()).toBe(2);
+      });
+
+      it('should simplify billing periods', () => {
+        const usage = time({ h: 2, m: 15 });
+        expect(usage.ceil('h').toHours()).toBe(3); // Bill for 3 hours
+      });
+
+      it('should work with arithmetic operations', () => {
+        const base = time({ h: 2, m: 30 });
+        const rounded = base.round('h'); // 2h 30m rounds to 3h
+        const doubled = rounded.add(rounded); // 3h + 3h = 6h
+        expect(doubled.toHours()).toBe(6);
+      });
+
+      it('should work with comparison operations', () => {
+        const actual = time({ h: 2, m: 45 });
+        const limit = time({ h: 3 });
+        expect(actual.round('h').equals(limit)).toBe(true);
+      });
+
+      it('should work with component extraction', () => {
+        const duration = time({ h: 73, m: 45 }).round('h');
+        expect(duration.getDays()).toBe(3);
+        expect(duration.getHours()).toBe(2);
+        expect(duration.getMinutes()).toBe(0);
+      });
+    });
+
+    describe('combined with other methods', () => {
+      it('should work with add', () => {
+        const result = time({ h: 2, m: 45 })
+          .round('h')
+          .add(time({ h: 1, m: 30 }));
+        expect(result.toHours()).toBe(4.5);
+      });
+
+      it('should work with subtract', () => {
+        const result = time({ h: 5, m: 45 })
+          .round('h')
+          .subtract(time({ h: 2 }));
+        expect(result.toHours()).toBe(4);
+      });
+
+      it('should work with clone', () => {
+        const original = time({ h: 2, m: 45 });
+        const rounded = original.clone().round('h');
+        expect(original.toMinutes()).toBe(165);
+        expect(rounded.toMinutes()).toBe(180);
+      });
+
+      it('should work with fromString', () => {
+        const result = time().fromString('2h 37m').round('h');
+        expect(result.toHours()).toBe(3);
+      });
+
+      it('should work with fromISO8601String', () => {
+        const result = time().fromISO8601String('PT2H37M').round('h');
+        expect(result.toHours()).toBe(3);
+      });
+    });
+  });
 });
