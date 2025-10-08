@@ -317,6 +317,42 @@ export interface TimeBuilder {
    * @example time().hour(2).isBetween(time().hour(1), time().hour(3)) // true
    */
   isBetween: (min: TimeBuilder, max: TimeBuilder) => boolean;
+  /**
+   * Gets the weeks component of the duration (not total weeks)
+   * @returns The number of whole weeks in the duration
+   * @example time({ w: 2, d: 3 }).getWeeks() // 2
+   */
+  getWeeks: () => number;
+  /**
+   * Gets the days component of the duration (0-6, not total days)
+   * @returns The number of days after weeks are extracted
+   * @example time({ w: 1, d: 3 }).getDays() // 3
+   */
+  getDays: () => number;
+  /**
+   * Gets the hours component of the duration (0-23, not total hours)
+   * @returns The number of hours after days are extracted
+   * @example time({ d: 1, h: 5 }).getHours() // 5
+   */
+  getHours: () => number;
+  /**
+   * Gets the minutes component of the duration (0-59, not total minutes)
+   * @returns The number of minutes after hours are extracted
+   * @example time({ h: 2, m: 30 }).getMinutes() // 30
+   */
+  getMinutes: () => number;
+  /**
+   * Gets the seconds component of the duration (0-59, not total seconds)
+   * @returns The number of seconds after minutes are extracted
+   * @example time({ m: 5, s: 45 }).getSeconds() // 45
+   */
+  getSeconds: () => number;
+  /**
+   * Gets the milliseconds component of the duration (0-999, not total milliseconds)
+   * @returns The number of milliseconds after seconds are extracted
+   * @example time({ s: 3, ms: 500 }).getMilliseconds() // 500
+   */
+  getMilliseconds: () => number;
 }
 
 const TIME_CONSTANTS = {
@@ -636,6 +672,34 @@ function isBetween(
   return currentMs >= minMs && currentMs <= maxMs;
 }
 
+function getWeeks(currentMs: number) {
+  return Math.floor(currentMs / TIME_CONSTANTS.WEEK_IN_MS);
+}
+
+function getDays(currentMs: number) {
+  const remainingAfterWeeks = currentMs % TIME_CONSTANTS.WEEK_IN_MS;
+  return Math.floor(remainingAfterWeeks / TIME_CONSTANTS.DAY_IN_MS);
+}
+
+function getHours(currentMs: number) {
+  const remainingAfterDays = currentMs % TIME_CONSTANTS.DAY_IN_MS;
+  return Math.floor(remainingAfterDays / TIME_CONSTANTS.HOUR_IN_MS);
+}
+
+function getMinutes(currentMs: number) {
+  const remainingAfterHours = currentMs % TIME_CONSTANTS.HOUR_IN_MS;
+  return Math.floor(remainingAfterHours / TIME_CONSTANTS.MINUTE_IN_MS);
+}
+
+function getSeconds(currentMs: number) {
+  const remainingAfterMinutes = currentMs % TIME_CONSTANTS.MINUTE_IN_MS;
+  return Math.floor(remainingAfterMinutes / TIME_CONSTANTS.SECOND_IN_MS);
+}
+
+function getMilliseconds(currentMs: number) {
+  return Math.floor(currentMs % TIME_CONSTANTS.SECOND_IN_MS);
+}
+
 /**
  * Creates a time builder for converting between different time units
  * @param options - Configuration options for the time builder
@@ -711,5 +775,11 @@ export function time(options?: TimeOptions): TimeBuilder {
     isGreaterThanOrEqual: (duration: TimeBuilder) => isGreaterThanOrEqual(totalMs, duration),
     equals: (duration: TimeBuilder) => equals(totalMs, duration),
     isBetween: (min: TimeBuilder, max: TimeBuilder) => isBetween(totalMs, min, max),
+    getWeeks: () => getWeeks(totalMs),
+    getDays: () => getDays(totalMs),
+    getHours: () => getHours(totalMs),
+    getMinutes: () => getMinutes(totalMs),
+    getSeconds: () => getSeconds(totalMs),
+    getMilliseconds: () => getMilliseconds(totalMs),
   };
 }

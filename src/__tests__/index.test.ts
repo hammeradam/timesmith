@@ -805,4 +805,281 @@ describe('timesmith', () => {
       expect(result).toContain('1.5S');
     });
   });
+
+  describe('get individual components', () => {
+    describe('getWeeks', () => {
+      it('should get weeks component from weeks only', () => {
+        expect(time({ w: 2 }).getWeeks()).toBe(2);
+      });
+
+      it('should get weeks component from mixed duration', () => {
+        expect(time({ w: 2, d: 3, h: 5 }).getWeeks()).toBe(2);
+      });
+
+      it('should return 0 when no weeks', () => {
+        expect(time({ d: 5, h: 3 }).getWeeks()).toBe(0);
+      });
+
+      it('should calculate weeks from days', () => {
+        expect(time({ d: 14 }).getWeeks()).toBe(2);
+      });
+
+      it('should not include partial weeks', () => {
+        expect(time({ d: 10 }).getWeeks()).toBe(1); // 1 week + 3 days
+      });
+    });
+
+    describe('getDays', () => {
+      it('should get days component from days only', () => {
+        expect(time({ d: 3 }).getDays()).toBe(3);
+      });
+
+      it('should get days component excluding weeks', () => {
+        expect(time({ w: 2, d: 3 }).getDays()).toBe(3);
+      });
+
+      it('should return remaining days after weeks', () => {
+        expect(time({ d: 10 }).getDays()).toBe(3); // 10 days = 1 week + 3 days
+      });
+
+      it('should return 0 when no days', () => {
+        expect(time({ h: 5, m: 30 }).getDays()).toBe(0);
+      });
+
+      it('should calculate days from hours', () => {
+        expect(time({ h: 48 }).getDays()).toBe(2);
+      });
+
+      it('should not include partial days', () => {
+        expect(time({ h: 26 }).getDays()).toBe(1); // 1 day + 2 hours
+      });
+    });
+
+    describe('getHours', () => {
+      it('should get hours component from hours only', () => {
+        expect(time({ h: 5 }).getHours()).toBe(5);
+      });
+
+      it('should get hours component excluding days', () => {
+        expect(time({ d: 2, h: 5 }).getHours()).toBe(5);
+      });
+
+      it('should return remaining hours after days', () => {
+        expect(time({ h: 26 }).getHours()).toBe(2); // 26 hours = 1 day + 2 hours
+      });
+
+      it('should return 0 when no hours', () => {
+        expect(time({ m: 30, s: 15 }).getHours()).toBe(0);
+      });
+
+      it('should calculate hours from minutes', () => {
+        expect(time({ m: 180 }).getHours()).toBe(3);
+      });
+
+      it('should not include partial hours', () => {
+        expect(time({ m: 90 }).getHours()).toBe(1); // 1 hour + 30 minutes
+      });
+    });
+
+    describe('getMinutes', () => {
+      it('should get minutes component from minutes only', () => {
+        expect(time({ m: 30 }).getMinutes()).toBe(30);
+      });
+
+      it('should get minutes component excluding hours', () => {
+        expect(time({ h: 2, m: 30 }).getMinutes()).toBe(30);
+      });
+
+      it('should return remaining minutes after hours', () => {
+        expect(time({ m: 90 }).getMinutes()).toBe(30); // 90 minutes = 1 hour + 30 minutes
+      });
+
+      it('should return 0 when no minutes', () => {
+        expect(time({ s: 45 }).getMinutes()).toBe(0);
+      });
+
+      it('should calculate minutes from seconds', () => {
+        expect(time({ s: 180 }).getMinutes()).toBe(3);
+      });
+
+      it('should not include partial minutes', () => {
+        expect(time({ s: 90 }).getMinutes()).toBe(1); // 1 minute + 30 seconds
+      });
+    });
+
+    describe('getSeconds', () => {
+      it('should get seconds component from seconds only', () => {
+        expect(time({ s: 45 }).getSeconds()).toBe(45);
+      });
+
+      it('should get seconds component excluding minutes', () => {
+        expect(time({ m: 5, s: 45 }).getSeconds()).toBe(45);
+      });
+
+      it('should return remaining seconds after minutes', () => {
+        expect(time({ s: 90 }).getSeconds()).toBe(30); // 90 seconds = 1 minute + 30 seconds
+      });
+
+      it('should return 0 when no seconds', () => {
+        expect(time({ ms: 500 }).getSeconds()).toBe(0);
+      });
+
+      it('should calculate seconds from milliseconds', () => {
+        expect(time({ ms: 5000 }).getSeconds()).toBe(5);
+      });
+
+      it('should not include partial seconds', () => {
+        expect(time({ ms: 1500 }).getSeconds()).toBe(1); // 1 second + 500 milliseconds
+      });
+    });
+
+    describe('getMilliseconds', () => {
+      it('should get milliseconds component from milliseconds only', () => {
+        expect(time({ ms: 500 }).getMilliseconds()).toBe(500);
+      });
+
+      it('should get milliseconds component excluding seconds', () => {
+        expect(time({ s: 3, ms: 500 }).getMilliseconds()).toBe(500);
+      });
+
+      it('should return remaining milliseconds after seconds', () => {
+        expect(time({ ms: 1500 }).getMilliseconds()).toBe(500); // 1 second + 500 milliseconds
+      });
+
+      it('should return 0 when no milliseconds', () => {
+        expect(time({ s: 5 }).getMilliseconds()).toBe(0);
+      });
+
+      it('should handle large millisecond values', () => {
+        expect(time({ ms: 10500 }).getMilliseconds()).toBe(500); // 10 seconds + 500 milliseconds
+      });
+    });
+
+    describe('complex durations', () => {
+      it('should extract all components correctly', () => {
+        const duration = time({ w: 2, d: 3, h: 5, m: 30, s: 45, ms: 500 });
+        expect(duration.getWeeks()).toBe(2);
+        expect(duration.getDays()).toBe(3);
+        expect(duration.getHours()).toBe(5);
+        expect(duration.getMinutes()).toBe(30);
+        expect(duration.getSeconds()).toBe(45);
+        expect(duration.getMilliseconds()).toBe(500);
+      });
+
+      it('should work with chained operations', () => {
+        const duration = time().week(1).day(2).hour(3).minute(4).second(5).millisecond(6);
+        expect(duration.getWeeks()).toBe(1);
+        expect(duration.getDays()).toBe(2);
+        expect(duration.getHours()).toBe(3);
+        expect(duration.getMinutes()).toBe(4);
+        expect(duration.getSeconds()).toBe(5);
+        expect(duration.getMilliseconds()).toBe(6);
+      });
+
+      it('should work after arithmetic operations', () => {
+        const duration = time({ h: 25 }).add(time({ m: 90 })); // 26 hours 30 minutes
+        expect(duration.getDays()).toBe(1);
+        expect(duration.getHours()).toBe(2);
+        expect(duration.getMinutes()).toBe(30);
+      });
+
+      it('should work with parsed strings', () => {
+        const duration = time().fromString('2w 3d 5h 30m 45s');
+        expect(duration.getWeeks()).toBe(2);
+        expect(duration.getDays()).toBe(3);
+        expect(duration.getHours()).toBe(5);
+        expect(duration.getMinutes()).toBe(30);
+        expect(duration.getSeconds()).toBe(45);
+      });
+
+      it('should work with ISO8601 strings', () => {
+        const duration = time().fromISO8601String('P1W2DT3H4M5S');
+        expect(duration.getWeeks()).toBe(1);
+        expect(duration.getDays()).toBe(2);
+        expect(duration.getHours()).toBe(3);
+        expect(duration.getMinutes()).toBe(4);
+        expect(duration.getSeconds()).toBe(5);
+      });
+    });
+
+    describe('edge cases', () => {
+      it('should handle zero duration', () => {
+        const duration = time();
+        expect(duration.getWeeks()).toBe(0);
+        expect(duration.getDays()).toBe(0);
+        expect(duration.getHours()).toBe(0);
+        expect(duration.getMinutes()).toBe(0);
+        expect(duration.getSeconds()).toBe(0);
+        expect(duration.getMilliseconds()).toBe(0);
+      });
+
+      it('should handle exactly one week', () => {
+        const duration = time({ d: 7 });
+        expect(duration.getWeeks()).toBe(1);
+        expect(duration.getDays()).toBe(0);
+      });
+
+      it('should handle exactly one day', () => {
+        const duration = time({ h: 24 });
+        expect(duration.getDays()).toBe(1);
+        expect(duration.getHours()).toBe(0);
+      });
+
+      it('should handle exactly one hour', () => {
+        const duration = time({ m: 60 });
+        expect(duration.getHours()).toBe(1);
+        expect(duration.getMinutes()).toBe(0);
+      });
+
+      it('should handle exactly one minute', () => {
+        const duration = time({ s: 60 });
+        expect(duration.getMinutes()).toBe(1);
+        expect(duration.getSeconds()).toBe(0);
+      });
+
+      it('should handle exactly one second', () => {
+        const duration = time({ ms: 1000 });
+        expect(duration.getSeconds()).toBe(1);
+        expect(duration.getMilliseconds()).toBe(0);
+      });
+    });
+
+    describe('comparison with to* methods', () => {
+      it('should differ from toWeeks (total vs component)', () => {
+        const duration = time({ w: 2, d: 3 });
+        expect(duration.getWeeks()).toBe(2); // Component
+        expect(duration.toWeeks()).toBeCloseTo(2.428, 2); // Total
+      });
+
+      it('should differ from toDays (total vs component)', () => {
+        const duration = time({ w: 1, d: 3 });
+        expect(duration.getDays()).toBe(3); // Component
+        expect(duration.toDays()).toBe(10); // Total
+      });
+
+      it('should differ from toHours (total vs component)', () => {
+        const duration = time({ d: 1, h: 5 });
+        expect(duration.getHours()).toBe(5); // Component
+        expect(duration.toHours()).toBe(29); // Total
+      });
+
+      it('should differ from toMinutes (total vs component)', () => {
+        const duration = time({ h: 2, m: 30 });
+        expect(duration.getMinutes()).toBe(30); // Component
+        expect(duration.toMinutes()).toBe(150); // Total
+      });
+
+      it('should differ from toSeconds (total vs component)', () => {
+        const duration = time({ m: 3, s: 45 });
+        expect(duration.getSeconds()).toBe(45); // Component
+        expect(duration.toSeconds()).toBe(225); // Total
+      });
+
+      it('should differ from toMilliseconds (total vs component)', () => {
+        const duration = time({ s: 5, ms: 500 });
+        expect(duration.getMilliseconds()).toBe(500); // Component
+        expect(duration.toMilliseconds()).toBe(5500); // Total
+      });
+    });
+  });
 });

@@ -11,11 +11,12 @@ A fluent, type-safe API for time duration calculations in TypeScript with full I
 ## Features
 
 - **Fluent API** - Chain time operations naturally
+- **Component Extraction** - Get individual time parts (weeks, days, hours, etc.)
 - **ISO 8601 Support** - Parse and format ISO 8601 duration strings
 - **i18n Ready** - Full localization support with custom translations
 - **Type-Safe** - Complete TypeScript support with strict typing
 - **Lightweight** - Zero dependencies
-- **Well Tested** - 97%+ test coverage
+- **Well Tested** - 98%+ test coverage
 
 ## Installation
 
@@ -91,13 +92,40 @@ const hours = time({ d: 1 }).build({ unit: 'h' }); // 24
 ### Unit Conversions
 
 ```typescript
-// Direct conversion methods
+// Direct conversion methods (returns total in that unit)
 const weeks = time().day(14).toWeeks(); // 2
 const days = time().hour(48).toDays(); // 2
 const hours = time().minute(120).toHours(); // 2
 const minutes = time().second(180).toMinutes(); // 3
 const seconds = time().minute(2).toSeconds(); // 120
 const ms = time().second(1).toMilliseconds(); // 1000
+```
+
+### Getting Individual Components
+
+```typescript
+// Extract individual time components (not totals)
+const duration = time({ w: 2, d: 3, h: 5, m: 30, s: 45, ms: 500 });
+
+duration.getWeeks(); // 2 (weeks component)
+duration.getDays(); // 3 (days component, 0-6)
+duration.getHours(); // 5 (hours component, 0-23)
+duration.getMinutes(); // 30 (minutes component, 0-59)
+duration.getSeconds(); // 45 (seconds component, 0-59)
+duration.getMilliseconds(); // 500 (milliseconds component, 0-999)
+
+// Difference between get* and to* methods
+const mixed = time({ d: 10, h: 5 });
+mixed.getDays(); // 3 (component: 10 days = 1 week + 3 days)
+mixed.toDays(); // 10.208... (total days including hours)
+
+// Useful for custom formatting
+const d = time({ h: 26, m: 30 });
+console.log(`${d.getDays()}d ${d.getHours()}h ${d.getMinutes()}m`); // "1d 2h 30m"
+
+// Works with parsed durations
+time().fromString('2w 3d 5h').getWeeks(); // 2
+time().fromISO8601String('P1W2DT3H').getDays(); // 2
 ```
 
 ### Duration Arithmetic
@@ -418,6 +446,111 @@ console.log(modified.toHours()); // 3.5
 
 ---
 
+### Component Extraction Methods
+
+Extract individual time components from a duration. These methods return the component value (not the total), respecting the range of each unit.
+
+#### `getWeeks(): number`
+
+Gets the weeks component of the duration.
+
+**Returns:** `number` - The number of whole weeks (0-∞)
+
+**Example:**
+```typescript
+time({ w: 2, d: 3 }).getWeeks(); // 2
+time({ d: 14 }).getWeeks(); // 2 (14 days = 2 weeks)
+time({ d: 10 }).getWeeks(); // 1 (10 days = 1 week + 3 days)
+```
+
+#### `getDays(): number`
+
+Gets the days component of the duration (0-6, not total days).
+
+**Returns:** `number` - The number of days after weeks are extracted (0-6)
+
+**Example:**
+```typescript
+time({ w: 1, d: 3 }).getDays(); // 3
+time({ d: 10 }).getDays(); // 3 (10 days = 1 week + 3 days)
+time({ h: 48 }).getDays(); // 2 (48 hours = 2 days)
+```
+
+#### `getHours(): number`
+
+Gets the hours component of the duration (0-23, not total hours).
+
+**Returns:** `number` - The number of hours after days are extracted (0-23)
+
+**Example:**
+```typescript
+time({ d: 1, h: 5 }).getHours(); // 5
+time({ h: 26 }).getHours(); // 2 (26 hours = 1 day + 2 hours)
+time({ m: 180 }).getHours(); // 3 (180 minutes = 3 hours)
+```
+
+#### `getMinutes(): number`
+
+Gets the minutes component of the duration (0-59, not total minutes).
+
+**Returns:** `number` - The number of minutes after hours are extracted (0-59)
+
+**Example:**
+```typescript
+time({ h: 2, m: 30 }).getMinutes(); // 30
+time({ m: 90 }).getMinutes(); // 30 (90 minutes = 1 hour + 30 minutes)
+time({ s: 180 }).getMinutes(); // 3 (180 seconds = 3 minutes)
+```
+
+#### `getSeconds(): number`
+
+Gets the seconds component of the duration (0-59, not total seconds).
+
+**Returns:** `number` - The number of seconds after minutes are extracted (0-59)
+
+**Example:**
+```typescript
+time({ m: 5, s: 45 }).getSeconds(); // 45
+time({ s: 90 }).getSeconds(); // 30 (90 seconds = 1 minute + 30 seconds)
+time({ ms: 5000 }).getSeconds(); // 5 (5000 ms = 5 seconds)
+```
+
+#### `getMilliseconds(): number`
+
+Gets the milliseconds component of the duration (0-999, not total milliseconds).
+
+**Returns:** `number` - The number of milliseconds after seconds are extracted (0-999)
+
+**Example:**
+```typescript
+time({ s: 3, ms: 500 }).getMilliseconds(); // 500
+time({ ms: 1500 }).getMilliseconds(); // 500 (1500 ms = 1 second + 500 ms)
+time({ ms: 10500 }).getMilliseconds(); // 500 (10500 ms = 10 seconds + 500 ms)
+```
+
+**Common Use Cases:**
+```typescript
+// Custom time formatting
+const duration = time({ h: 26, m: 30, s: 45 });
+console.log(`${duration.getDays()}d ${duration.getHours()}h ${duration.getMinutes()}m ${duration.getSeconds()}s`);
+// Output: "1d 2h 30m 45s"
+
+// Building time display strings
+const duration = time({ h: 50 });
+const parts = [
+  `${duration.getDays()} days`,
+  `${duration.getHours()} hours`,
+  `${duration.getMinutes()} minutes`
+].filter(part => !part.startsWith('0')).join(', ');
+
+// Difference from to* methods (component vs total)
+const duration = time({ w: 2, d: 3 });
+duration.getDays(); // 3 (component)
+duration.toDays(); // 17 (total: 2 weeks + 3 days = 17 days)
+```
+
+---
+
 ### String Methods
 
 #### `toString(options?): string`
@@ -721,6 +854,28 @@ cache.set('key', value, ttl);
 ```typescript
 const interval = time({ m: 15 }).toMilliseconds(); // 900000ms
 setInterval(checkUpdates, interval);
+```
+
+### Custom Time Formatting
+```typescript
+// Build custom time displays using component extraction
+const uptime = time({ h: 73, m: 45, s: 30 });
+
+// Format as "3d 1h 45m"
+const formatted = [
+  uptime.getDays() && `${uptime.getDays()}d`,
+  uptime.getHours() && `${uptime.getHours()}h`,
+  uptime.getMinutes() && `${uptime.getMinutes()}m`,
+].filter(Boolean).join(' ');
+
+// Or create detailed displays
+const duration = time({ d: 5, h: 3, m: 30 });
+console.log(`
+  Weeks: ${duration.getWeeks()}
+  Days: ${duration.getDays()}
+  Hours: ${duration.getHours()}
+  Minutes: ${duration.getMinutes()}
+`);
 ```
 
 ### Duration Calculations
